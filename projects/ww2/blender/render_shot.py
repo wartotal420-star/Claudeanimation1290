@@ -116,7 +116,7 @@ for fr in D["frames"][::STEP]:
     if MAXF and done >= MAXF: break
     c = fr["cam"]; pos, fwd, right, up = three_cam(c)
     cam.location = T(*pos); d = T(*Vector(c["look"])) - cam.location
-    q = d.to_track_quat("-Z", "Z"); cam.rotation_mode = "QUATERNION"; cam.rotation_quaternion = q @ Quaternion((0, 0, 1), c["roll"])
+    q = d.to_track_quat("-Z", "Y"); cam.rotation_mode = "QUATERNION"; cam.rotation_quaternion = q @ Quaternion((0, 0, 1), c["roll"])
     cam.data.angle = math.radians(c["fov"])
     dof = fr["dof"]
     cam.data.dof.use_dof = dof["c"] > 0.5
