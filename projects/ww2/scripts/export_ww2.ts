@@ -107,6 +107,6 @@ for (const id of ids) {
     cardsOut.push({ a: c.a, b: c.b, file });
   });
   fs.writeFileSync(path.join(outDir, "timeline.json"), JSON.stringify({ total: X.TOTAL, fps: story.FPS, xfade: X.XFADE,
-    shots: X.SHOTS.map((s: any) => ({ id: s.id, a: s.a, b: s.b })), cards: cardsOut }));
+    shots: X.SHOTS.map((s: any) => ({ id: s.id, a: s.a, b: s.b, set: s.set, light: s.light })), kicks: X.KICKS ?? [], cards: cardsOut }));
   console.log("timeline + title cards written");
 }

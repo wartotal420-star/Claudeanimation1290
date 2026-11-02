@@ -24,7 +24,7 @@ export const makeChapter = (d: ChapterDef) => {
   const kick = kicker(d.kicks ?? []), dofAt = dofFrom(d.dof);
   const byId = new Map(d.shots.map((s) => [s.id, s]));
   return {
-    TOTAL: d.total, SHOTS: d.shots, XFADE: d.xfade ?? {}, CARDS: d.cards, FPS,
+    TOTAL: d.total, SHOTS: d.shots, XFADE: d.xfade ?? {}, CARDS: d.cards, FPS, KICKS: d.kicks ?? [],
     camAt: (id: number, f: number) => camFrom(d.cams[id], f, kick),
     dofAt,
     stage: (id: number, f: number, cam: CamInfo, sun: THREE.Vector3) => {
