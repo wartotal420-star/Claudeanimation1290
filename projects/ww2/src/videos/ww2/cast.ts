@@ -1,7 +1,7 @@
 // WW2 part 1 cast: lit flat sprites + unlit effect cards, staged per shot in each set's local coordinates.
 import * as THREE from "three";
 import {
-  Pen, bodyFront, bodySide, army, US, CA, GE, JP, KID, INK, shade, Outfit, Expr, FrontOpts, SideOpts, Pose,
+  Pen, bodyFront, bodySide, army, US, CA, GE, JP, KID, INK, SAILOR, shade, Outfit, Expr, FrontOpts, SideOpts, Pose,
   fxContact, fxShadow, fxMist, fxBomber, fxMushroom, fxStamp, fxBanknote, fxChart, fxPadlock, fxNewspaper, fxFlame, fxMapCut,
 } from "./toon";
 import { FPS, SHOTS, clamp01, smooth, DOM0 } from "./story";
@@ -532,5 +532,201 @@ export const stage = (id: number, f: number, cam: CamInfo, sun: THREE.Vector3): 
   return out;
 };
 export type { V3 };
+// ---- WW2 figures (chapters 2-14) ----
+// Leaders: recognisable caricatures from silhouette, face and props only; no insignia, armbands or party emblems.
+export const CHURCHILL = suit("#2a2a34", { hat: "homburg", hatCol: "#1e1e24", band: "#141418", build: "fat", jowls: true, cigar: true, bowtie: "#24346e", tieDots: "#f4f4f2",
+  vest: "#34343e", watch: true, pattern: "pinstripe", patCol: "#55556a", skin: "#ffd9c6", cheeks: true, nose: "round", brows: "#c8a888", hair: "#e6d2bc", pocket: "#f4f0e6" });
+/** Churchill without the hat: bald dome, wispy side tufts */
+export const CHURCHILL_BARE: Outfit = { ...CHURCHILL, hat: "bald", tufts: true };
+export const STALIN: Outfit = { jacket: "#8c8268", pants: "#7a7058", boots: INK, tallBoots: true, hat: "swept", hair: "#5a4a3c", moustache: "#4a3a2c", stache: "walrus",
+  brows: "#4a3a2c", bushy: true, pipe: "briar", nose: "big", skin: "#f0cfae", build: "stout", tunic: true, buttons: "#6a604a", belt: null, stubble: false };
+/** Stalin in a marshal's greatcoat and peaked cap (Yalta / Potsdam) */
+export const STALIN_COAT: Outfit = { ...STALIN, coat: "#8c8268", hat: "peaked", cap: "#8c8268", band: "#c8202c", visor: INK, star: true, starCol: "#c8202c", boards: "#e8c45a" };
+export const ROOSEVELT = suit("#3a4050", { hat: "swept", hair: "#c4c4ca", pince: true, holder: true, cape: "#2a3042", tie: "#7a2a3a", nose: "round", jaw: true,
+  skin: "#f8dcc8", brows: "#a0a0a8", pocket: "#f4f0e6" });
+export const ROOSEVELT_HAT: Outfit = { ...ROOSEVELT, hat: "fedora", hatCol: "#5a5a60", band: "#2a2a30" };
+/** Mussolini: black shirt and tie, grey jodhpurs, tall boots, plain black tasselled cap (no emblem), jutting jaw */
+export const MUSSOLINI: Outfit = { jacket: "#1e1c22", sleeves: "#1e1c22", pants: "#4a4a52", boots: INK, tallBoots: true, hat: "fez", hatCol: "#141216", jaw: true, build: "stout",
+  tie: "#121014", shirt: "#26242a", waist: "#2a2420", buttons: "#3a3a40", skin: "#f0c8a0", brows: "#2a2018", bushy: true, nose: "round" };
+export const MUSSOLINI_BARE: Outfit = { ...MUSSOLINI, hat: "bald" };
+export const CHAMBERLAIN = suit("#22222a", { build: "thin", hat: "hair", hair: "#c8c8cc", part: true, moustache: "#9a9aa0", stache: "plain", wing: true, tie: "#3a3a48",
+  vest: "#22222a", watch: true, umbrella: true, nose: "long", brows: "#8a8a90", bushy: true, skin: "#f8e0cc", pocket: "#f4f0e6", pattern: "pinstripe", patCol: "#4a4a58" });
+export const CHAMBERLAIN_HAT: Outfit = { ...CHAMBERLAIN, hat: "homburg", hatCol: "#1e1e24", part: false };
+export const DEGAULLE: Outfit = { jacket: "#8a7a56", pants: "#8a7a56", boots: "#3a2a1c", tallBoots: true, hat: "kepi", cap: "#6e6046", band: "#c8a24a", build: "tall", nose: "long",
+  tunic: true, lapels: true, tie: "#6a5a3a", shirt: "#c8b890", buttons: "#c8a24a", waist: "#5a3a22", moustache: "#3a2a1a", stache: "pencil", skin: "#f6dcc4", brows: "#3a2a1a" };
+/** Hitler in wartime: plain field-grey jacket, shirt and tie, no armband or insignia; side parting, toothbrush moustache */
+export const HITLER_WAR: Outfit = { jacket: "#66685a", pants: "#2e2e30", boots: INK, tallBoots: true, hat: "hair", hair: "#2e2218", part: true, moustache: "brush:#2a1e14",
+  lapels: true, tunic: true, tie: "#2a2420", shirt: "#f0ece2", buttons: "#8a8c80", nose: "round", skin: "#f4d8c0" };
+/** Hitler 1945: greying, pale, eye bags and forehead lines (stoop him with tilt / headTilt) */
+export const HITLER_OLD: Outfit = { ...HITLER_WAR, hair: "#4c443e", haggard: true, skin: "#e6d2c4", brows: "#4c443e", moustache: "brush:#3a302a", jacket: "#5e6054" };
+export const TRUMAN = suit("#4a4a54", { hat: "fedora", hatCol: "#7a7468", band: "#3a3430", glasses: true, bowtie: "#2a3a6a", tieDots: "#f4f0e6", pocket: "#f4f0e6", nose: "round",
+  skin: "#f8dcc4", hair: "#8a8a8e", brows: "#6a6a6e" });
+export const TRUMAN_BARE: Outfit = { ...TRUMAN, hat: "hair", hair: "#9a9aa0", part: true };
+/** Eisenhower: short "Ike" jacket, peaked cap, ribbons; give him the "grin" */
+export const EISENHOWER: Outfit = { jacket: "#6a6044", pants: "#8a7656", boots: "#5a3a22", hat: "peaked", cap: "#6a6044", band: "#5a5038", visor: "#4a3020", badge: "#e8c45a",
+  tunic: true, lapels: true, tie: "#7a6a48", shirt: "#8a7a58", buttons: "#8a7a50", boards: "#6a6044", medals: 6, skin: "#f8dcc4", nose: "round", brows: "#b8a888", waist: "#6a6044" };
+export const EISENHOWER_BARE: Outfit = { ...EISENHOWER, hat: "bald", hair: "#d8c8b0", tufts: true };
+export const MACARTHUR: Outfit = { jacket: "#c8b48a", pants: "#c8b48a", boots: "#5a3a22", hat: "peaked", cap: "#a89060", band: "#6a5a3a", visor: "#3a2a1a", braid: true, badge: "#e8c45a",
+  aviators: true, pipe: "corncob", nose: "long", jaw: true, skin: "#f2d4b8", build: "thin", tunic: true, buttons: "#8a7a50", boards: "#e8c45a" };
+export const MONTGOMERY: Outfit = { jacket: "#7a7a72", pants: "#9a8a60", boots: "#3a2a20", hat: "beret", hatCol: "#1e1c24", badge: "#c8ccd4", build: "thin", nose: "long",
+  moustache: "#9a8a70", stache: "pencil", skin: "#f8dcc4", brows: "#8a7a60", tunic: true, buttons: "#5a5a54", shirt: "#c8b48a", scarf: "#c8b48a" };
+export const ZHUKOV: Outfit = { jacket: "#6a6a48", pants: "#3a3a4a", boots: INK, tallBoots: true, hat: "peaked", cap: "#6a6a48", band: "#c8202c", visor: INK, star: true, starCol: "#c8202c",
+  build: "stout", medals: 14, boards: "#e8c45a", tunic: true, buttons: "#e8c45a", jaw: true, nose: "round", skin: "#f2d4b0", brows: "#5a4a3a", waist: "#5a3a22" };
+/** Tojo: bald, round glasses, moustache, Japanese officer khaki (cap variant TOJO_CAP) */
+export const TOJO: Outfit = { jacket: "#8a7a48", pants: "#8a7a48", boots: "#3a2a1a", tallBoots: true, hat: "bald", glasses: true, moustache: "#2a2420", stache: "plain", tunic: true,
+  buttons: "#c8a24a", boards: "#c8202c", medals: 3, skin: "#f2d0a8", nose: "round", brows: "#2a2420", build: "short", waist: "#5a3a22" };
+export const TOJO_CAP: Outfit = { ...TOJO, hat: "peaked", cap: "#8a7a48", band: "#c8202c", visor: "#3a2a1a", star: true, starCol: "#e8c45a" };
+/** Rommel (Desert Fox): field grey, peaked cap, light scarf; Stauffenberg: officer with an eye patch */
+export const ROMMEL: Outfit = { jacket: "#6a6e5e", pants: "#5a5e50", boots: INK, tallBoots: true, hat: "peaked", cap: "#6a6e5e", band: "#3a4a3a", visor: INK, saddle: true, badge: "#c8ccd4",
+  scarf: "#e8e0cc", tunic: true, buttons: "#8a8c80", boards: "#c8ccd4", medals: 4, nose: "round", jaw: true, skin: "#f6d8c0", brows: "#5a4a3a" };
+export const STAUFFENBERG: Outfit = { ...ROMMEL, scarf: undefined, eyepatch: true, jaw: false, build: "thin", nose: "long", hat: "hair", hair: "#3a2a1e", part: true, medals: 2 };
+/** Paulus at Stalingrad: gaunt, greatcoat, stubble */
+export const PAULUS: Outfit = { ...ROMMEL, scarf: undefined, coat: "#5e6254", jacket: "#5e6254", haggard: true, stubble: true, build: "thin", nose: "long", jaw: false, medals: 2 };
+export const HIROHITO: Outfit = suit("#1e1e26", { hat: "hair", hair: "#1e1a18", glasses: true, moustache: "#1e1a18", stache: "pencil", build: "thin", skin: "#f2d0a8", nose: "button", tie: "#3a3a48" });
+
+// ---- soldiers of every army: varied rotations (skin, build, nose, stubble, scars, moustaches, kit) ----
+export const SOVIET: Outfit = { jacket: "#8a8458", pants: "#7a7448", boots: "#2a2420", tallBoots: true, hat: "pilotka", cap: "#8a8050", star: true, starCol: "#c8202c", tunic: true,
+  webbing: "#6a5a3a", buttons: "#5a5030", canteen: true, belt: null, rifle: false, smg: "ppsh" };
+const pick = <T,>(a: T[], i: number) => a[((i % a.length) + a.length) % a.length];
+const HAIRS = ["#3a2a1a", "#8a6a4a", "#1e1a18", "#a0502a", "#c8a060"];
+/** Soviet rifleman: pilotka side cap / ushanka / steel helmet, PPSh or rifle, some in greatcoats */
+export const soviet = (i: number): [Outfit, string] => {
+  const hat = pick(["pilotka", "ushanka", "m33", "pilotka", "ushanka"], i), coat = i % 3 === 1;
+  return [army(SOVIET, i, { hat, helmCol: "#4e5a3c", cap: hat === "ushanka" ? pick(["#7a6450", "#8a8a80", "#6a5440"], i) : "#8a8050", hair: pick(HAIRS, i), hairUnder: hat === "pilotka",
+    smg: i % 3 === 2 ? undefined : "ppsh", rifle: i % 3 === 2, coat: coat ? "#7e7462" : undefined, jacket: coat ? "#7e7462" : SOVIET.jacket, canteen: !coat }), `su${i % 30}`];
+};
+/** winter: Soviet ski troops in white snow capes, or freezing Germans with scarves and frost (Moscow 1941) */
+export const winter = (i: number): [Outfit, string] => {
+  if (i % 2 === 0) return [army(SOVIET, i, { hat: "ushanka", cap: pick(["#e8e8e4", "#7a6450", "#8a8a80"], i), cape: "#eef2f6", snow: true, coat: "#e8ecf0", jacket: "#e8ecf0", pants: "#dfe4ea",
+    star: i % 4 === 0, frost: i % 4 === 2, cheeks: true, smg: i % 3 ? "ppsh" : undefined, rifle: i % 3 === 0, canteen: false, webbing: undefined }), `wi${i % 30}`];
+  return [army(GE, i, { coat: "#5a6054", jacket: "#5a6054", scarf: pick(["#8a3a3a", "#c8b8a0", "#4a4a6a", "#6a5a3a"], i), frost: true, cheeks: true, stubble: true, helmCol: "#e0e4e8",
+    canteen: false, rifle: i % 4 !== 3, smg: i % 4 === 3 ? "smg" : undefined }), `wi${i % 30}`];
+};
+/** Japanese infantry: field cap with neck flap, or netted helmet with flap; rifle and bayonet */
+export const japanese = (i: number): [Outfit, string] => {
+  const helm = i % 2 === 1;
+  return [army(JP, i, { hat: helm ? "jphelm" : "cap", net: helm, flaps: i % 3 !== 2, bayonet: true, helmCol: "#6a6a3e" }), `jp${i % 30}`];
+};
+/** Italian infantry: grey-green, rounded M33 helmet or side cap */
+export const IT: Outfit = { jacket: "#7a7a5c", pants: "#74745a", boots: "#3a2a20", hat: "m33", helmCol: "#5e6248", tunic: true, webbing: "#6a5a3a", puttees: "#6a6a50", canteen: true,
+  buttons: "#5a5a48", belt: null, rifle: true };
+export const italian = (i: number): [Outfit, string] => [army(IT, i, { hat: i % 3 === 2 ? "pilotka" : "m33", cap: "#74745a", hair: pick(HAIRS, i), hairUnder: true,
+  ...(i % 4 === 1 ? { stache: "handlebar" as const, moustache: "#2a2018" } : {}) }), `it${i % 30}`];
+/** British Tommy: Brodie helmet, khaki battledress, pale webbing; some with a Sten */
+export const tommy = (i: number): [Outfit, string] => [army(CA, i, { webbing: "#c8bc8c", jacket: "#86704a", smg: i % 4 === 3 ? "smg" : undefined, rifle: i % 4 !== 3,
+  ...(i % 5 === 1 ? { moustache: "#5a3a26", stache: "handlebar" as const } : {}) }), `uk${i % 30}`];
+/** US GI: M1 helmet with net; some with a Thompson */
+export const gi = (i: number): [Outfit, string] => [army(US, i, { smg: i % 4 === 3 ? "smg" : undefined, rifle: i % 4 !== 3 }), `gi${i % 30}`];
+/** German infantry: plain flared steel helmet, field grey, no insignia; some with an MP40-type gun */
+export const german = (i: number): [Outfit, string] => [army(GE, i, { smg: i % 4 === 3 ? "smg" : undefined, rifle: i % 4 !== 3, coat: i % 5 === 2 ? "#5a6054" : undefined }), `de${i % 30}`];
+/** French 1940: Adrian helmet, khaki greatcoat, puttees */
+export const french = (i: number): [Outfit, string] => [army(CA, i, { hat: "adrian", helmCol: pick(["#5a6a5a", "#6a6a50"], i), jacket: "#8a7a54", pants: "#7a6a48", coat: "#8a7a54",
+  puttees: "#7a6a4a", webbing: "#5a4028", ...(i % 3 === 0 ? { moustache: "#3a2a1a", stache: "walrus" as const } : {}) }), `fr${i % 30}`];
+/** Polish 1939: square-topped field cap or helmet, khaki-green */
+export const polish = (i: number): [Outfit, string] => [army(CA, i, { hat: i % 2 ? "stahl" : "rogatywka", helmCol: "#565a42", cap: "#6a6a48", jacket: "#6e6e4c", pants: "#64644a",
+  puttees: undefined, tallBoots: true, boots: "#2a2420", webbing: "#5a4a30" }), `pl${i % 30}`];
+/** Chinese National Revolutionary Army: grey-blue cotton, steel helmet or soft cap, puttees */
+export const chinese = (i: number): [Outfit, string] => [army(JP, i, { hat: i % 2 ? "stahl" : "cap", helmCol: "#4a5450", cap: "#5e6a72", flaps: false, jacket: "#66727c", pants: "#5e6a72",
+  puttees: "#6e7880", webbing: "#5a4a30", star: false }), `cn${i % 30}`];
+/** 1945 Volkssturm: old men in civilian coats and teenage boys in oversized helmets */
+export const volkssturm = (i: number): [Outfit, string] => {
+  const old = i % 2 === 0, m = MEN[(i * 5 + 3) % MEN.length];
+  return [{ ...m, hat: "stahl", helmCol: "#4c5448", coat: old ? m.jacket : "#5a5e54", jacket: old ? m.jacket : "#5a5e54", build: old ? pick(["fat", "stout", "thin"], i) : "short",
+    moustache: old ? "#d8d8d8" : undefined, stache: old ? "walrus" : undefined, brows: old ? "#d8d8d8" : undefined, stubble: old, haggard: old, cigar: false, rifle: true, bayonet: false,
+    skin: pick(SK, i), lapels: old, vest: undefined, tie: undefined, bowtie: undefined, pocket: false, pattern: undefined, watch: false }, `vs${i % 30}`];
+};
+type ArmyK = "su" | "uk" | "us" | "de" | "jp" | "it" | "fr";
+const OFF: Record<ArmyK, Outfit> = {
+  su: { jacket: "#6a6a48", pants: "#3a3a4a", boots: INK, tallBoots: true, hat: "peaked", cap: "#6a6a48", band: "#c8202c", visor: INK, star: true, starCol: "#c8202c", tunic: true,
+    boards: "#e8c45a", buttons: "#e8c45a", waist: "#5a3a22" },
+  uk: { jacket: "#86704a", pants: "#86704a", boots: "#5a3a22", hat: "peaked", cap: "#86704a", band: "#86704a", visor: "#5a3a22", badge: "#c8a24a", lapels: true, tie: "#86704a",
+    shirt: "#c8b48a", buttons: "#c8a24a", waist: "#5a3a22", boards: "#86704a" },
+  us: { jacket: "#6a6044", pants: "#8a7656", boots: "#5a3a22", hat: "peaked", cap: "#6a6044", band: "#5a5038", visor: "#4a3020", badge: "#e8c45a", lapels: true, tie: "#7a6a48",
+    shirt: "#8a7a58", buttons: "#8a7a50" },
+  de: { jacket: "#5e6658", pants: "#3a3a3a", boots: INK, tallBoots: true, hat: "peaked", cap: "#5e6658", band: "#3a4a3a", visor: INK, saddle: true, badge: "#c8ccd4", lapels: true,
+    tie: "#2a2420", shirt: "#e8e4da", buttons: "#8a8c80", boards: "#c8ccd4" },
+  jp: { jacket: "#8a7a48", pants: "#8a7a48", boots: "#3a2a1a", tallBoots: true, hat: "peaked", cap: "#8a7a48", band: "#c8202c", visor: "#3a2a1a", star: true, starCol: "#e8c45a",
+    tunic: true, buttons: "#c8a24a", boards: "#c8202c", waist: "#5a3a22", sword: true },
+  it: { jacket: "#7a7a5c", pants: "#5a5a50", boots: INK, tallBoots: true, hat: "peaked", cap: "#7a7a5c", band: "#7a7a5c", visor: INK, badge: "#c8a24a", lapels: true, tie: "#5a5a48",
+    shirt: "#e8e4da", buttons: "#c8a24a" },
+  fr: { jacket: "#8a7a56", pants: "#8a7a56", boots: "#3a2a1c", tallBoots: true, hat: "kepi", cap: "#2a3050", band: "#c8a24a", lapels: true, tie: "#6a5a3a", shirt: "#c8b890",
+    buttons: "#c8a24a", waist: "#5a3a22" },
+};
+/** officer of an army, varied faces and builds: officer("de", 3) */
+export const officer = (k: ArmyK, i: number): [Outfit, string] => [{ ...OFF[k], skin: k === "jp" ? pick(["#f5d3ac", "#ecc69b", "#f0cfa6"], i) : pick(SK, i),
+  build: pick(["stout", "adult", "thin", "fat", "adult", "short"], i), nose: pick(["round", "long", "big", "button"] as Outfit["nose"][], i), glasses: i % 4 === 2,
+  moustache: i % 3 === 1 ? pick(["#3a2a1a", "#8a8a8a", "#6a4a2a"], i) : undefined, stache: i % 3 === 1 ? pick(["plain", "walrus", "pencil", "handlebar"] as Outfit["stache"][], i) : undefined,
+  medals: (i * 3) % 7, brows: i % 5 === 4 ? "#9a9a9a" : undefined, jowls: i % 6 === 3, jaw: i % 6 === 1 }, `of${k}${i % 12}`];
+/** pilots: leather helmet + goggles, flight jacket with a fur collar, silk scarf (RAF / US / German / Japanese rotation) */
+export const pilot = (i: number): [Outfit, string] => {
+  const k = i % 4;
+  return [{ jacket: pick(["#6a4a30", "#7a5236", "#2a2624", "#8a7a48"], k), pants: pick(["#4a5468", "#6a6044", "#4c5048", "#8a7a48"], k), boots: "#2a2018", tallBoots: k > 1,
+    hat: "leather", hatCol: pick(["#5a3a24", "#6a4428", "#2a2420", "#6a5a3a"], i), fur: k === 2 ? undefined : "#efe4cc", scarf: pick(["#f4f0e6", "#e8e0cc", "#c8c8c8", "#f4f4f0"], i),
+    skin: k === 3 ? pick(["#f5d3ac", "#ecc69b"], i) : pick(SK, i), build: pick(["adult", "thin", "stout", "adult", "short"], i), nose: pick(["round", "long", "button", "big"] as Outfit["nose"][], i),
+    moustache: k === 0 && i % 2 === 0 ? "#6a4a2a" : undefined, stache: "handlebar", buttons: "#3a2a20", pocket: false } as Outfit, `pi${i % 24}`];
+};
+/** US sailors in blues or whites with the square collar */
+export const sailor = (i: number): [Outfit, string] => {
+  const whites = i % 3 === 2;
+  return [{ ...SAILOR, jacket: whites ? "#f2f2ee" : "#2e4270", pants: whites ? "#f2f2ee" : "#2a3350", sailorCollar: "#2a3a66", tie: "#1e1c24", buttons: "#c9ccd2", boots: INK,
+    skin: pick(SK, i), build: pick(["adult", "thin", "stout", "short", "adult"], i), nose: pick(["button", "round", "long", "big"] as Outfit["nose"][], i), freckles: i % 5 === 1,
+    cheeks: i % 5 === 1, stubble: i % 7 === 4 }, `sa${i % 24}`];
+};
+/** navy officers: dark double-breasted blues, gold cuff rings, white-topped peaked cap (senior ones with gold braid) */
+export const navyOfficer = (i: number): [Outfit, string] => [{ jacket: "#1e2438", pants: "#1e2438", boots: INK, lapels: true, tie: "#141418", shirt: "#f4f4f2", buttons: "#e8c45a",
+  rings: 2 + (i % 3), hat: "peaked", cap: "#f4f4f2", band: "#1e1c24", visor: INK, badge: "#e8c45a", braid: i % 3 === 2, skin: pick(SK, i + 1),
+  build: pick(["stout", "adult", "thin", "fat"], i), moustache: i % 4 === 1 ? "#8a8a8a" : undefined, nose: pick(["round", "long", "big"] as Outfit["nose"][], i), medals: 3 + (i % 4),
+  brows: i % 2 ? "#9a9a9a" : undefined, jowls: i % 4 === 3 }, `nv${i % 24}`];
+/** US paratrooper: jump jacket, netted M1, brown jump boots, Thompson or rifle */
+export const para = (i: number): [Outfit, string] => [army(US, i, { jacket: "#9a8a62", pants: "#8a7a54", tallBoots: true, boots: "#6a4428", puttees: undefined, smg: i % 2 ? "smg" : undefined,
+  rifle: i % 2 === 0, webbing: "#7a7048", scarf: i % 3 === 0 ? "#c8c0a0" : undefined }), `pa${i % 24}`];
+/** army nurses: blue or white dress, white pinafore with a red cross, white cap; some with a cape */
+export const nurse = (i: number): [Outfit, string] => [{ ...WOMEN[i % WOMEN.length], dress: pick(["#7a9ac8", "#f2f2ee", "#8aa8c8"], i), jacket: pick(["#7a9ac8", "#f2f2ee", "#8aa8c8"], i),
+  dressPat: undefined, sashW: undefined, pearls: false, scarf: undefined, apron: "#fbfbf8", redcross: true, hat: "nurse", hairUnder: true, pcollar: "#ffffff", bow: undefined, lashes: true,
+  cape: i % 3 === 1 ? "#2a3050" : undefined, socks: "#e8d8c8", boots: "#2a2228" }, `nu${i % 16}`];
+/** factory women ("Rosie"): red polka-dot bandana, denim coveralls, rolled sleeves */
+export const rosie = (i: number): [Outfit, string] => [{ jacket: pick(["#5a7aa8", "#6a8ab8", "#4a6a98"], i), pants: pick(["#2e4a7a", "#3a5688", "#344e80"], i), bib: pick(["#2e4a7a", "#3a5688", "#344e80"], i),
+  rolled: true, hat: "bandana", cap: pick(["#c8202c", "#d0303a", "#c8202c", "#2a5aa8"], i), patCol: "#ffffff", hair: pick(["#5a3a2a", "#2a1e18", "#c88a40", "#8a3a1e"], i), lashes: true,
+  cheeks: true, boots: "#4a3020", skin: pick(SK, i + 2), build: pick(["adult", "thin", "stout", "short"], i), nose: pick(["button", "round", "button", "long"] as Outfit["nose"][], i),
+  freckles: i % 4 === 2, buttons: "#c8ccd4", tunic: false }, `ro${i % 16}`];
+/** codebreakers (Bletchley-style office wear): tweed and cardigans for the men, blouses + cardigans + skirts for the women */
+export const codebreaker = (i: number): [Outfit, string] => {
+  if (i % 2 === 0) return [suit(pick(["#6a5a44", "#5a5a50", "#4a4038", "#6a6a5a"], i), { pattern: pick(["check", "plaid", "check", undefined] as Outfit["pattern"][], i), patCol: "#3a3028",
+    vest: pick(["#8a6a3a", "#5a6a4a", "#7a3a3a"], i), tie: pick(["#7a2a2a", "#2a4a6a", "#4a6a3a"], i), glasses: i % 4 === 0, hat: "hair", hair: pick(HAIRS, i), part: i % 3 === 0,
+    skin: pick(SK, i), build: pick(["thin", "adult", "stout"], i), nose: pick(["long", "round", "button"] as Outfit["nose"][], i), pipe: i % 6 === 2 ? "briar" : undefined }), `cb${i % 16}`];
+  const w = WOMEN[(i * 3) % WOMEN.length];
+  return [{ ...w, hat: "hair", jacket: pick(["#8a6a8a", "#5a7a6a", "#c8a870", "#6a7a9a"], i), dress: pick(["#4a4a5a", "#5a4a3a", "#3a4a5a", "#6a5a4a"], i), dressPat: undefined, sashW: undefined,
+    pcollar: "#f4f0e6", glasses: i % 3 === 1, lashes: true, pearls: i % 4 === 1, scarf: undefined }, `cb${i % 16}`];
+};
+/** Blitz: ARP wardens (black helmet with a W, dark overalls, gas-mask box) and civilians with gas-mask boxes */
+export const warden = (i: number): [Outfit, string] => [{ jacket: "#2a3040", pants: "#2a3040", boots: INK, hat: "brodie", helmCol: "#1e1e22", helmMark: "W", gasbox: true, tunic: true,
+  buttons: "#5a5a60", skin: pick(SK, i), build: pick(["stout", "fat", "adult", "thin"], i), moustache: i % 2 ? pick(["#8a8a8a", "#5a3a26"], i) : undefined, stache: pick(["walrus", "plain"] as Outfit["stache"][], i),
+  nose: pick(["big", "round", "long"] as Outfit["nose"][], i), cheeks: true, waist: "#3a3020" }, `wd${i % 16}`];
+export const blitz = (i: number): [Outfit, string] => { const [o, k] = crowd(i); return [{ ...o, gasbox: true, coat: i % 3 === 1 && !o.dress ? o.jacket : undefined }, `bz${k}${i % 3}`]; };
+/** evacuee children: name tags, gas-mask boxes, caps and berets (give them prop "case") */
+export const evacuee = (i: number): [Outfit, string] => {
+  const k = KIDS[i % KIDS.length];
+  return [{ ...k, tag: true, gasbox: true, jacket: pick(["#5a6a8a", "#8a5a3a", "#6a7a4a", "#a84a4a", "#4a5a6a"], i), hat: i % 3 === 2 ? "hair" : "flatcap",
+    cap: pick(["#4a4a5a", "#8a3a3a", "#3a5a3a"], i), skin: pick(SK, i + 1), coat: i % 2 ? pick(["#5a6a8a", "#8a5a3a", "#6a7a4a"], i) : undefined, freckles: i % 2 === 0 }, `ev${i % 16}`];
+};
+/** refugees: worn coats, headscarves and flat caps (props "bundle" / "case") */
+export const refugee = (i: number): [Outfit, string] => {
+  if (i % 2 === 0) { const w = WOMEN[(i * 3 + 1) % WOMEN.length]; return [{ ...w, hat: "headscarf", hatCol: pick(["#7a3a3a", "#4a5a7a", "#6a5a3a", "#5a3a4a"], i), patCol: i % 4 === 0 ? "#e8d8b0" : undefined,
+    pearls: false, dress: shade(w.dress!, 0.8), dressPat: undefined, jacket: pick(["#5a4a3a", "#4a4a52", "#5a5040"], i), lashes: false, socks: "#5a5050" }, `rf${i % 16}`]; }
+  const m = WORKERS[(i * 3) % WORKERS.length];
+  return [{ ...m, coat: pick(["#4a4038", "#3e3a36", "#5a4a3a"], i), jacket: pick(["#4a4038", "#3e3a36", "#5a4a3a"], i), stubble: true, patch: "#6a5a48", cigar: false, apron: undefined }, `rf${i % 16}`];
+};
+/** prisoners in striped uniforms (Holocaust chapter): thin, plain, shaved or capped; stage with "sorrow" / "grief" only */
+export const prisoner = (i: number): [Outfit, string] => [{ jacket: "#d4d8de", pants: "#d4d8de", pattern: "bars", patCol: "#56627e", pantsPat: "bars", boots: "#3a3030",
+  hat: i % 3 === 1 ? "bald" : "stripecap", cap: "#d4d8de", build: pick(["thin", "thin", "adult", "short"], i), skin: pick(["#ecd6c4", "#e6d0bc", "#f0dccc", "#dcc4ae"], i),
+  nose: pick(["long", "round", "button", "long"] as Outfit["nose"][], i), stubble: i % 2 === 0, buttons: "#9aa0aa", brows: pick(["#3a2a1a", "#5a4a3a", "#8a8a8a"], i), haggard: i % 4 === 3 }, `pr${i % 16}`];
+
 /** every outfit, for lineup previews (scripts) */
 export const CAST = { SOLDIER, ONODA, trooper, CLEM, WILSON, LLOYD, GERMAN, HITLER, BAKER, OFFICIAL, WORKERS, MEN, WOMEN, KIDS };
+/** chapters 2-14: leaders (fixed outfits) and the varied generators ((i) => [Outfit, key]), for lineup previews */
+export const CAST2 = {
+  CHURCHILL, CHURCHILL_BARE, STALIN, STALIN_COAT, ROOSEVELT, ROOSEVELT_HAT, MUSSOLINI, MUSSOLINI_BARE, CHAMBERLAIN, CHAMBERLAIN_HAT, DEGAULLE, HITLER_WAR, HITLER_OLD,
+  TRUMAN, TRUMAN_BARE, EISENHOWER, EISENHOWER_BARE, MACARTHUR, MONTGOMERY, ZHUKOV, TOJO, TOJO_CAP, ROMMEL, STAUFFENBERG, PAULUS, HIROHITO, ONODA,
+  soviet, winter, japanese, italian, tommy, gi, german, french, polish, chinese, volkssturm, officer, pilot, sailor, navyOfficer, para, nurse, rosie, codebreaker, warden, blitz,
+  evacuee, refugee, prisoner,
+};
