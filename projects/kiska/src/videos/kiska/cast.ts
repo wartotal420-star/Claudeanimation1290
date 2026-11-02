@@ -278,7 +278,7 @@ const stage6 = (cam: CamInfo, t: number, out: Stage) => {
     out.places.push(person(cam, who("us", 1), x, y, z, false, false, { mode: "stand", expr: "stern", blink: lidAt(t, 60), facing: 0 }, {}));
     blob(out, x, y, z);
   }
-  for (let i = 0; i < 6; i++) mist(out, BEACH_X - 12 + i * 5, gy(BEACH_X, BZ + 6) + 0.4, BZ + 3 + hh(i, 5) * 10, 8, t, i);
+  for (let i = 0; i < 6; i++) mist(out, BEACH_X - 12 + i * 5, 0.6, BZ - 5 - hh(i, 5) * 4, 8, t, i);
 };
 const stage7 = (cam: CamInfo, t: number, out: Stage) => {
   const [x, z] = P7, y = gy(x, z), down = t > 855 / FPS;

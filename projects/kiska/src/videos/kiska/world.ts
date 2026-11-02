@@ -8,7 +8,7 @@ import { TONE, CHAR, LFB, untone } from "./shade";
 import { NOINK } from "./ink";
 import { Pool, Actor, Fx, stage } from "./cast";
 import { FPS, SHOTS, camAt, ShotDef, V3, FIELD, BEACH_X, BZ, ROOM, USS, PIER_X, PIER_END, P12, LANE_X, smooth } from "./story";
-import { H, shoreZ, CAMP, MAT, terrain, hut, ship, lcvp, plane, rock, Mats } from "./island";
+import { H, shoreZ, CAMP, MAT, terrain, hut, ship, lcvp, plane, rock, barge, Mats } from "./island";
 
 export const loadKit = () => Promise.resolve({} as Kit);
 
@@ -88,7 +88,7 @@ export class World {
     const zs = shoreZ(PIER_X);
     b.add(boxGeo(V(PIER_X - 2, 1.0, PIER_END), V(PIER_X + 2, 1.45, zs + 6), 2), M.plank);
     for (let z = PIER_END; z < zs; z += 4) for (const s of [-1.8, 1.8]) b.add(new THREE.CylinderGeometry(0.18, 0.18, 8, 6).translate(PIER_X + s, -3, z), M.wood);
-    for (const x of [PIER_X - 5, PIER_X + 5]) { b.add(boxGeo(V(x - 1.6, -0.5, PIER_END - 6), V(x + 1.6, 1.1, PIER_END + 7), 0, true), M.craft); }
+    barge(b, M, PIER_X - 4.5, PIER_END - 1, -Math.PI / 2 - 0.1); barge(b, M, PIER_X + 4.2, PIER_END - 3, -Math.PI / 2 + 0.15);
     // landing craft at the beach, ramps down
     for (const x of [38, 50, 62]) lcvp(b, M, x, 0.45, BZ - 7.5, -Math.PI / 2, 1);
     for (const x of [26, 76]) lcvp(b, M, x, 0.2, BZ - 30, -Math.PI / 2, 0);
@@ -157,7 +157,7 @@ export class World {
         .replace("#include <lights_fragment_end>", "#include <lights_fragment_end>\n  reflectedLight.directDiffuse = diffuseColor.rgb * mix(wShade, vec3(1.0), sunVis);\n  reflectedLight.indirectDiffuse = vec3(0.0);");
     };
     waterM.customProgramCacheKey = () => "sea1";
-    const sea = new THREE.Mesh(new THREE.PlaneGeometry(6000, 6000).rotateX(-Math.PI / 2), waterM);
+    const sea = new THREE.Mesh(new THREE.PlaneGeometry(6000, 6000, 150, 150).rotateX(-Math.PI / 2), waterM); // small cells: huge triangles lose depth precision in software GL
     sea.position.y = 0.0; sea.receiveShadow = true;
     R.add(sea);
   }
@@ -184,7 +184,7 @@ export class World {
     const t = f / FPS, s = SHOTS[id - 1], L = LIGHTS[s.light], K = LOOK[s.light];
     const c = camAt(id, f);
     cam.position.set(...c.pos); cam.up.set(0, 1, 0); cam.lookAt(...c.look); cam.rotateZ(c.roll);
-    cam.fov = c.fov; cam.near = 0.15; cam.far = 3000; cam.updateProjectionMatrix(); cam.updateMatrixWorld();
+    cam.fov = c.fov; cam.near = 0.25; cam.far = 3000; cam.updateProjectionMatrix(); cam.updateMatrixWorld();
     const focus = V(...c.look), dist = cam.position.distanceTo(focus);
     cam.layers.enable(NOINK);
     // ---- light rig ----

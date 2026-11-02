@@ -17,11 +17,11 @@ export const VOLCANO: V3 = [260, 0, 620];
 export const H = (x: number, z: number) => {
   const d = z - shoreZ(x);
   let h: number;
-  if (d < 0) h = Math.max(-6, d * 0.08);
+  if (d < 0) h = Math.max(-14, -1.2 + d * 0.35);
   else if (d < 25) h = d * 0.07;
   else h = 1.75 + 10 * sm(25, 140, d) + 3.5 * Math.sin(x / 31) * Math.sin(z / 27) * sm(25, 80, d) + 40 * sm(160, 460, d);
   const r = Math.hypot(x - VOLCANO[0], z - VOLCANO[2]);
-  h = Math.max(h, 280 * Math.max(0, 1 - r / 520) ** 1.7);
+  if (r < 520) h = Math.max(h, 280 * (1 - r / 520) ** 1.7); // (was max(h, 0) everywhere: it lifted the sea bed to the water line)
   // flatten the camp terrace
   const rc = Math.hypot(x - CAMP[0], z - CAMP[2]);
   if (d > 0) h = h + (3.2 + 0.03 * (z - CAMP[2]) - h) * bump(rc / 75);
@@ -156,6 +156,19 @@ export const ship = (b: Batch, m: Mats, x: number, z: number, yaw: number, L = 1
     add(boxGeo(V(tx - 2, 4, -1.8), V(tx + 2, 6, 1.8), 0, true), hullM);
     for (const s2 of [-0.5, 0.5]) { const gb = new THREE.CylinderGeometry(0.22, 0.22, 7, 8); gb.rotateZ(Math.PI / 2); gb.translate(tx + dir * 5, 5.1, s2); add(gb, m.steel); }
   }
+};
+/** small motor barge (daihatsu-like): pointed hull, ramp bow, low wheelhouse at the stern; bow toward +x of yaw */
+export const barge = (b: Batch, m: Mats, x: number, z: number, yaw: number) => {
+  const T = M4(x, 0, z, yaw);
+  const s = new THREE.Shape([new THREE.Vector2(-6.5, -1.7), new THREE.Vector2(4.5, -1.7), new THREE.Vector2(6.5, -0.8), new THREE.Vector2(6.5, 0.8),
+    new THREE.Vector2(4.5, 1.7), new THREE.Vector2(-6.5, 1.7)]);
+  const hull = new THREE.ExtrudeGeometry(s, { depth: 1.7, bevelEnabled: false }); hull.rotateX(-Math.PI / 2); hull.translate(0, -0.5, 0);
+  b.add(hull, m.hull, T);
+  const deck = new THREE.ShapeGeometry(s); deck.rotateX(-Math.PI / 2); deck.scale(0.92, 1, 0.85); deck.translate(0, 1.0, 0);
+  b.add(deck, m.deck, T);
+  b.add(boxGeo(V(-6.2, 1.2, -1.0), V(-4.2, 2.7, 1.0), 0, true), m.hull, T);
+  b.add(boxGeo(V(-6.25, 2.2, -1.02), V(-4.15, 2.45, 1.02)), m.steel, T);
+  b.add(new THREE.CylinderGeometry(0.15, 0.15, 1.2, 6).translate(-5.6, 3.3, 0), m.steel, T);
 };
 /** landing craft (LCVP-like), bow ramp toward +x of yaw, ramp lowered by rampK (0 up .. 1 down on the sand) */
 export const lcvp = (b: Batch, m: Mats, x: number, y: number, z: number, yaw: number, rampK = 1) => {
