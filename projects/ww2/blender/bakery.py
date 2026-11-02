@@ -17,7 +17,7 @@ if sys.platform == "darwin":
     try:
         pr = bpy.context.preferences.addons["cycles"].preferences; pr.compute_device_type = "METAL"; pr.get_devices(); [setattr(d, "use", True) for d in pr.devices]
     except Exception as e: print("metal", e)
- S.cycles.samples = SAMPLES; S.cycles.use_denoising = True
+S.cycles.samples = SAMPLES; S.cycles.use_denoising = True
 S.cycles.max_bounces = 6; S.cycles.light_sampling_threshold = 0.01
 S.render.resolution_x, S.render.resolution_y, S.render.resolution_percentage = 1920, 1080, PCT
 S.view_settings.view_transform = "AgX"
