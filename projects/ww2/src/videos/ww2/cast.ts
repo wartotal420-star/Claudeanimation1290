@@ -4,8 +4,10 @@ import {
   Pen, bodyFront, bodySide, army, US, JP, KID, INK, Outfit, Expr, FrontOpts, SideOpts,
   fxContact, fxShadow, fxMist, fxBomber, fxMushroom, fxStamp, fxBanknote, fxChart, fxPadlock, fxNewspaper, fxFlame, fxMapCut,
 } from "./toon";
-import { FPS, SHOTS, V3, clamp01, smooth, DOM0 } from "./story";
-import { setOrigin, SetName } from "./sets";
+import { FPS, SHOTS, clamp01, smooth, DOM0 } from "./story";
+import type { V3 } from "./story";
+import { setOrigin } from "./sets";
+import type { SetName } from "./sets";
 import { NOINK } from "./ink";
 import { cardShade, blobMaterial, CARD_K } from "./cardshade";
 
@@ -329,4 +331,4 @@ export const stage = (id: number, f: number, cam: CamInfo, sun: THREE.Vector3): 
   STAGE[id]?.({ cam, t: f / FPS, f, out, O });
   return out;
 };
-export { V3 };
+export type { V3 };

@@ -18,6 +18,7 @@ export type Outfit = {
   jacket: string; pants: string; boots: string; hat?: string | null; belt?: string | null; buttons?: string; rifle?: boolean;
   sash?: string; sword?: boolean; moustache?: string; skin?: string; head?: number; cap?: string; hair?: string; dress?: string;
   build?: Build; star?: boolean; glasses?: boolean; part?: boolean; sweat?: boolean;
+  pattern?: "plaid" | "stripes" | "check"; patCol?: string; vest?: string; bowtie?: string; tie?: string; scarf?: string; apron?: string; pocket?: boolean;
 };
 type P2 = [number, number];
 
@@ -630,12 +631,15 @@ export const bodyFront = (p: Pen, o: Outfit, opts: FrontOpts) => {
         p.poly([[xc - 3.5 * u, yc - 3.5 * u], [xc + 3.5 * u, yc - 3.5 * u], [xc + 3.5 * u, yc + 3.5 * u], [xc - 3.5 * u, yc + 3.5 * u]], "#d9dde0", 1.5 * u);
       }
       if (o.sash) p.band([[tcx - 1.3 * T.a, torsoBot - 0.32 * HH], [tcx + 1.3 * T.a, torsoBot - 0.32 * HH]], o.sash, 0.13 * HH, 1.8 * u);
+      clothDetail(p, o, tcx, chin, torsoBot, T.a, HH, u, facing);
       for (let i = 0; i < 4; i++) {
         const y = chin + 0.12 * HH + i * 0.2 * HH;
         if (o.sash && Math.abs(y - (torsoBot - 0.32 * HH)) < 0.08 * HH) continue;
         p.dot(tcx + 2 * u * facing, y, 2.2 * u + 0.8 * u, INK); p.dot(tcx + 2 * u * facing, y, 2.2 * u, o.buttons ?? shade(o.jacket, 0.7));
       }
     });
+    if (o.bowtie) { const bx = tcx + 2 * u * facing, by = chin + 0.04 * HH; p.poly([[bx, by], [bx - 9 * u, by - 5 * u], [bx - 9 * u, by + 5 * u]], o.bowtie, 1.6 * u); p.poly([[bx, by], [bx + 9 * u, by - 5 * u], [bx + 9 * u, by + 5 * u]], o.bowtie, 1.6 * u); p.ell(bx, by, 2.6 * u, 2.6 * u, o.bowtie, 1.4 * u); }
+    if (o.scarf) { p.band([[tcx - 0.62 * T.a, chin + 0.06 * HH], [tcx + 0.62 * T.a, chin + 0.06 * HH]], o.scarf, 0.11 * HH, 1.8 * u, "round"); p.poly([[tcx + 0.3 * T.a, chin + 0.08 * HH], [tcx + 0.46 * T.a, chin + 0.08 * HH], [tcx + 0.52 * T.a, chin + 0.5 * HH], [tcx + 0.3 * T.a, chin + 0.46 * HH]], o.scarf, 1.8 * u); }
     if (o.sash) { const s = facing || 1; p.poly([[tcx + s * 0.55 * T.a, torsoBot - 0.3 * HH], [tcx + s * 0.75 * T.a, torsoBot + 0.05 * HH], [tcx + s * 0.45 * T.a, torsoBot + 0.02 * HH]], o.sash, 1.6 * u); }
     p.inkRing(tp, ow, thick);
   }
@@ -716,6 +720,29 @@ const ik = (hip: P2, ank: P2, l1: number, l2: number): P2 => {
 
 /** hip height of the seated kid in `swing` mode (design units); swingKid seats the torso bottom on the plank */
 const SWING_HIP = 733;
+
+/** fabric pattern, vest, apron, tie, pocket square drawn inside the torso clip (front view) */
+const clothDetail = (p: Pen, o: Outfit, tcx: number, chin: number, bot: number, Ta: number, HH: number, u: number, facing: number) => {
+  const g = p.g, top = chin - 0.3 * HH;
+  if (o.pattern) {
+    const c = o.patCol ?? shade(o.jacket, 0.72);
+    g.save(); g.globalAlpha = 0.55; g.strokeStyle = c; g.lineWidth = o.pattern === "plaid" ? 3.2 * u : 2.4 * u;
+    const step = (o.pattern === "check" ? 9 : 11) * u;
+    for (let x = tcx - 1.3 * Ta; x < tcx + 1.3 * Ta; x += step) { g.beginPath(); g.moveTo(x, top); g.lineTo(x, bot + 10 * u); g.stroke(); }
+    if (o.pattern !== "stripes") for (let y = top; y < bot + 10 * u; y += step) { g.beginPath(); g.moveTo(tcx - 1.3 * Ta, y); g.lineTo(tcx + 1.3 * Ta, y); g.stroke(); }
+    if (o.pattern === "plaid") { g.globalAlpha = 0.35; g.strokeStyle = "#f2e2a8"; g.lineWidth = 1.2 * u; for (let x = tcx - 1.3 * Ta + step / 2; x < tcx + 1.3 * Ta; x += step * 2) { g.beginPath(); g.moveTo(x, top); g.lineTo(x, bot + 10 * u); g.stroke(); } }
+    g.restore();
+  }
+  if (o.vest) {
+    const vx = tcx + 2 * u * facing;
+    p.poly([[vx - 0.62 * Ta, chin + 0.02 * HH], [vx - 0.08 * Ta, chin + 0.42 * HH], [vx, chin + 0.32 * HH], [vx + 0.08 * Ta, chin + 0.42 * HH], [vx + 0.62 * Ta, chin + 0.02 * HH],
+      [vx + 0.72 * Ta, bot + 4 * u], [vx - 0.72 * Ta, bot + 4 * u]], o.vest, 2.2 * u);
+    p.poly([[vx - 0.2 * Ta, chin + 0.02 * HH], [vx, chin + 0.3 * HH], [vx + 0.2 * Ta, chin + 0.02 * HH]], "#f4f0e6", 1.6 * u);
+  }
+  if (o.apron) p.poly([[tcx - 0.62 * Ta, chin + 0.38 * HH], [tcx + 0.62 * Ta, chin + 0.38 * HH], [tcx + 0.8 * Ta, bot + 20 * u], [tcx - 0.8 * Ta, bot + 20 * u]], o.apron, 2.2 * u);
+  if (o.tie) p.poly([[tcx - 3 * u, chin + 0.04 * HH], [tcx + 3 * u, chin + 0.04 * HH], [tcx + 5 * u, chin + 0.5 * HH], [tcx, chin + 0.6 * HH], [tcx - 5 * u, chin + 0.5 * HH]], o.tie, 1.6 * u);
+  if (o.pocket) p.poly([[tcx + 0.42 * Ta, chin + 0.22 * HH], [tcx + 0.62 * Ta, chin + 0.22 * HH], [tcx + 0.6 * Ta, chin + 0.3 * HH], [tcx + 0.44 * Ta, chin + 0.3 * HH]], "#f4f0e6", 1.2 * u);
+};
 
 /** aiming rifle line (butt, muzzle) from the shoulder point S, in canvas units */
 const aimLine = (S: P2, HH: number): [P2, P2] => [[S[0] - 0.18 * HH, S[1] + 0.02 * HH], [S[0] + 1.45 * HH, S[1] - 0.05 * HH]];
