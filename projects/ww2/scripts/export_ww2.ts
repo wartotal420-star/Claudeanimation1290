@@ -71,3 +71,25 @@ for (const id of ids) {
   fs.writeFileSync(path.join(outDir, `shot${String(id).padStart(2, "0")}.json`), JSON.stringify({ id, set: s.set, night: !!s.night, light: s.light, a: s.a, b: s.b, f0, f1, frames }));
   console.log(`shot ${id}: ${frames.length} frames, ${done.size} cards total`);
 }
+
+// timeline (shots, crossfades, total) + full-frame title / chapter card PNGs for the Blender assembly
+{
+  const cardsOut: any[] = [];
+  story.CARDS.forEach((c: any, i: number) => {
+    const W = story.W, H = story.H, cv = createCanvas(W, H), g = cv.getContext("2d") as any, title = c.kind === "title";
+    if (!title) { g.fillStyle = "rgba(10,8,14,0.72)"; g.fillRect(0, 0, W, H); }
+    else { const gr = g.createRadialGradient(W / 2, H / 2, H * 0.2, W / 2, H / 2, H * 0.9); gr.addColorStop(0, "rgba(0,0,0,0)"); gr.addColorStop(1, "rgba(0,0,0,0.55)"); g.fillStyle = gr; g.fillRect(0, 0, W, H); }
+    g.textAlign = "center"; g.textBaseline = "middle"; g.shadowColor = "rgba(0,0,0,0.85)"; g.shadowBlur = 18; g.shadowOffsetY = 4;
+    const sizes = title ? [54, 132] : [44, 110, 44], gaps = title ? [0, 100] : [0, 90, 170];
+    const y0 = H / 2 - (title ? 50 : 85);
+    c.lines.forEach((l: string, k: number) => {
+      g.font = `bold ${sizes[k]}px Georgia, "Times New Roman", "DejaVu Serif", serif`; g.fillStyle = !title && k === 0 ? "#e8b85a" : "#f4ead2";
+      g.fillText(l.split("").join(String.fromCharCode(8202)), W / 2, y0 + gaps[k]);
+    });
+    const file = `titlecard${i}.png`; fs.writeFileSync(path.join(outDir, file), cv.toBuffer("image/png"));
+    cardsOut.push({ a: c.a, b: c.b, file });
+  });
+  fs.writeFileSync(path.join(outDir, "timeline.json"), JSON.stringify({ total: story.TOTAL, fps: story.FPS, xfade: story.XFADE,
+    shots: story.SHOTS.map((s: any) => ({ id: s.id, a: s.a, b: s.b })), cards: cardsOut }));
+  console.log("timeline + title cards written");
+}
