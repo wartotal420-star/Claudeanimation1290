@@ -12,7 +12,12 @@ ENGINE = ARGV[4] if len(ARGV) > 4 else "CYCLES"
 random.seed(1923)
 bpy.ops.wm.read_factory_settings(use_empty=True)
 S = bpy.context.scene
-S.render.engine = "BLENDER_EEVEE" if ENGINE == "EEVEE" else "CYCLES"; S.cycles.device = "GPU" if sys.platform == "darwin" else "CPU";
+if ENGINE == "EEVEE":
+    for eng in ("BLENDER_EEVEE_NEXT", "BLENDER_EEVEE"):  # 4.2-4.5 call it EEVEE_NEXT
+        try: S.render.engine = eng; break
+        except Exception: pass
+else: S.render.engine = "CYCLES"
+ S.cycles.device = "GPU" if sys.platform == "darwin" else "CPU";
 if sys.platform == "darwin":
     try:
         pr = bpy.context.preferences.addons["cycles"].preferences; pr.compute_device_type = "METAL"; pr.get_devices(); [setattr(d, "use", True) for d in pr.devices]
