@@ -17,3 +17,14 @@
 - Workflow: user records voice (Fish Audio) and renders on their Mac (`projects/<name>/render_mac.sh`, ~1-2 min).
   Have the user render an early preview and send screenshots before the final; check terrain/height functions
   for clamps (a max(h, 0) bug lifted the sea bed to the water line in Kiska).
+
+# Lessons from WW2 part 1 review (user: "way off on detail, quality, lighting")
+- Reference quality bar (see user screenshots, RicksClips): richly detailed painted environments (signs with text,
+  posters, boards, clutter, worn textures, real architecture), warm multi-source lighting with soft shadows and bounce,
+  detailed characters (patterned clothes: plaid, vests, bow ties, scarves; varied hats; props like cigars; varied body
+  shapes; expressive faces). Primitive boxes + one two-tone sun light are far below this bar.
+- Never: blank box ruins, glowing balls as fire, flat slab ships, blob props (helmet), unreadable maps, crude continents.
+- Characters must act on every line (gestures, walking, pointing, reacting); crowds need varied bodies/poses/views.
+- Camera: vary moves (tracks, low angles, quick cuts on punchlines); never glide through empty space.
+- Frame check: no heads cut at frame bottom, main character never a dot, text never clipped.
+- Review every shot with a frame sweep (one frame per 1.5 s) BEFORE asking the user to render.
