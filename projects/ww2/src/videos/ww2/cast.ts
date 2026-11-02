@@ -1,7 +1,7 @@
 // WW2 part 1 cast: lit flat sprites + unlit effect cards, staged per shot in each set's local coordinates.
 import * as THREE from "three";
 import {
-  Pen, bodyFront, bodySide, army, US, JP, KID, INK, shade, Outfit, Expr, FrontOpts, SideOpts, Pose,
+  Pen, bodyFront, bodySide, army, US, CA, GE, JP, KID, INK, shade, Outfit, Expr, FrontOpts, SideOpts, Pose,
   fxContact, fxShadow, fxMist, fxBomber, fxMushroom, fxStamp, fxBanknote, fxChart, fxPadlock, fxNewspaper, fxFlame, fxMapCut,
 } from "./toon";
 import { FPS, SHOTS, clamp01, smooth, DOM0 } from "./story";
@@ -162,7 +162,13 @@ const KIDS: Outfit[] = [
 ];
 const OFFICIAL: Outfit = suit("#3a3e4a", { pants: "#2e3038", hat: "bald", hair: "#8a8a8a", moustache: "#5a5a5a", stache: "handlebar", buttons: "#c8a24a", glasses: true,
   vest: "#8a2a2a", tie: "#e8c45a", watch: true, build: "stout", nose: "big", cigar: true, pattern: "pinstripe", patCol: "#5a6070" });
-const SOLDIER = army(US, 0), ONODA = army(JP, 1);
+const SOLDIER = army(US, 0, { bayonet: true });
+/** Onoda, 1974: thin, stubbled, patched and faded kit, cap with neck flap, still holding his rifle */
+const ONODA = army(JP, 1, { build: "thin", worn: true, stubble: true, patch: "#c8b878", jacket: "#a89a62", pants: "#988a52", bayonet: false, webbing: "#5a4a30", nose: "round" });
+/** soldiers of every army, rotated so no two neighbours match (helmets: M1 with net, Brodie, plain flared steel helmet) */
+const FRONT = [US, CA, GE];
+const trooper = (i: number): [Outfit, string] => { const b = FRONT[i % 3]; return [army(b, i), `tr${i % 3}_${i % 42}`]; };
+const TR_EXPR: Expr[] = ["stern", "angry", "worried", "stern", "pained", "gasp"];
 /** crowd extra i: rotate women / workers / men through every variant */
 const crowd = (i: number): [Outfit, string] => {
   const k = i % 3;
@@ -238,7 +244,8 @@ const s1 = (c: Ctx) => {
 const s2 = (c: Ctx) => {
   for (let i = 0; i < 6; i++) {
     const x = -1 + (i % 3) * 1.4 + hh(i) * 0.4, z = 7 + Math.floor(i / 3) * 3 - 0.9 * (c.t - at(140)) * 0;
-    P(c, W_(army(US, i), i, `fs${i % 4}`), x, 0, z - 1.2 * (c.t - at(140)), { mode: "march", phase: q(((c.t * 1.8 + hh(i, 2)) % 1), 60), expr: "stern", lift: 40 });
+    const [o, k] = trooper(i);
+    P(c, W_(o, i, k), x, 0, z - 1.2 * (c.t - at(140)), { mode: "march", phase: q(((c.t * 1.8 + hh(i, 2)) % 1), 60), expr: TR_EXPR[i % 6], lift: 40 });
   }
   for (let i = 0; i < 6; i++) mist(c.out, -14 + i * 6, 3 + (i % 2), 32 + i * 5, 14, c.t, i, "#6a5048", 0.55);
 };
@@ -255,7 +262,7 @@ const s4 = (c: Ctx) => {
   F(c, { key: `mush${q(g, 20)}`, cw: 512, ch: 640, draw: (p) => fxMushroom(p, q(g, 20)), x: 210, y: 60, z: 330, w: 110, h: 137, glow: 1.6 });
 };
 const s5 = (c: Ctx) => {
-  P(c, W_(ONODA, 3, "onoda"), 0, 0, 4, { mode: "stand", expr: c.t > at(446) ? "stern" : "neutral", look: c.t > at(410) && c.t < at(440) ? 1 : 0 });
+  P(c, W_(ONODA, 3, "onoda"), 0, 0, 4, { mode: "stand", expr: c.t > at(446) ? "stern" : "worried", look: c.t > at(410) && c.t < at(440) ? 1 : 0 });
   for (let i = 0; i < 5; i++) mist(c.out, -4 + i * 2, 0.4, 6 + (i % 2) * 2, 4, c.t, i, "#d8e8c8", 0.5);
 };
 // Paris
@@ -309,7 +316,8 @@ const s11 = (c: Ctx) => {
     F(c, { key: `mapcut${q(k, 20)}`, cw: 512, ch: 512, draw: (p) => fxMapCut(p, q(k, 20)), x: -0.15, y: 0.815, z: 2.65, w: 0.75, h: 0.75, flat: true, rot: Math.PI });
     for (let i = 0; i < 12; i++) {
       const down = i >= 2 && t > at(1190) + (i - 2) * 0.06, u = down ? smooth((t - at(1190) - (i - 2) * 0.06) / 0.18) : 0;
-      P(c, W_(army(US, i), 60 + i, `toy${i % 4}`), 0.35 + (i % 6) * 0.09, 0.8 + 0.02 * u, 2.95 + Math.floor(i / 6) * 0.12, { mode: "stand", expr: u > 0 ? "shock" : "stern", tilt: 85 * u }, 0.08, undefined, false);
+      const [to, tk] = trooper(i);
+      P(c, W_(to, 60 + i, `toy${tk}`), 0.35 + (i % 6) * 0.09, 0.8 + 0.02 * u, 2.95 + Math.floor(i / 6) * 0.12, { mode: "stand", expr: u > 0 ? "shock" : TR_EXPR[i % 6], tilt: 85 * u }, 0.08, undefined, false);
     }
   }
 };
@@ -517,4 +525,4 @@ export const stage = (id: number, f: number, cam: CamInfo, sun: THREE.Vector3): 
 };
 export type { V3 };
 /** every outfit, for lineup previews (scripts) */
-export const CAST = { CLEM, WILSON, LLOYD, GERMAN, HITLER, BAKER, OFFICIAL, WORKERS, MEN, WOMEN, KIDS };
+export const CAST = { SOLDIER, ONODA, trooper, CLEM, WILSON, LLOYD, GERMAN, HITLER, BAKER, OFFICIAL, WORKERS, MEN, WOMEN, KIDS };
