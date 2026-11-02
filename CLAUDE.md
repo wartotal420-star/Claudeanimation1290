@@ -4,3 +4,4 @@
   keep going with the work that was running. A new message is not a request to stop. Only stop when the user
   explicitly says to stop or cancel.
 - Keep answers short.
+- Working Remotion setup and known fixes: see `setup/README.md`. Read it before setting up a project.
