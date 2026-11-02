@@ -17,7 +17,7 @@ if ENGINE == "EEVEE":
         try: S.render.engine = eng; break
         except Exception: pass
 else: S.render.engine = "CYCLES"
- S.cycles.device = "GPU" if sys.platform == "darwin" else "CPU";
+S.cycles.device = "GPU" if sys.platform == "darwin" else "CPU"
 if sys.platform == "darwin":
     try:
         pr = bpy.context.preferences.addons["cycles"].preferences; pr.compute_device_type = "METAL"; pr.get_devices(); [setattr(d, "use", True) for d in pr.devices]
