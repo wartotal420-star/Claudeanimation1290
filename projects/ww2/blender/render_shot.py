@@ -29,6 +29,17 @@ if sys.platform == "darwin":
 S.cycles.samples = SAMPLES; S.cycles.use_denoising = True; S.cycles.max_bounces = 5; S.cycles.light_sampling_threshold = 0.02
 S.cycles.use_adaptive_sampling = True; S.cycles.adaptive_threshold = 0.03
 S.render.use_persistent_data = True
+ENGINE = os.environ.get("WW2_ENGINE", "cycles").lower()      # "eevee" = fast preview (Mac: BLENDER_EEVEE_NEXT on 4.5)
+if ENGINE == "eevee":
+    for eid in ("BLENDER_EEVEE_NEXT", "BLENDER_EEVEE"):
+        try: S.render.engine = eid; break
+        except Exception: pass
+    try: S.eevee.taa_render_samples = max(8, SAMPLES)
+    except Exception: pass
+    for k, v in (("use_raytracing", True), ("use_shadows", True), ("use_gtao", True)):
+        try: setattr(S.eevee, k, v)
+        except Exception: pass
+print("engine", S.render.engine)
 S.render.resolution_x, S.render.resolution_y, S.render.resolution_percentage = 1920, 1080, PCT
 S.render.film_transparent = False
 S.view_settings.view_transform = "AgX"

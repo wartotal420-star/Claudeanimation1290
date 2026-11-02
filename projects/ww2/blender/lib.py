@@ -122,3 +122,58 @@ def materials():
         glass=glass("glass"), sign=principled("sign", hexc("#1e3a2a"), 0.5), gold=principled("gold", hexc("#e8c060"), 0.3, 1.0), red=principled("red", hexc("#b8202c"), 0.5),
         chalk=principled("chalk", hexc("#262a28"), 0.9), white=principled("white", hexc("#f2ece0"), 0.6), jar=glass("jar"), shade=principled("shade", hexc("#2f4a3a"), 0.4, 0.6),
     )
+
+
+# ---------------- more procedural materials ----------------
+def brickmat(name, a, b2, mortar="#5a4e46", scale=4.0, w=0.5, h=0.25, rough=0.85):
+    m = principled(name, hexc(a), rough); t, n, l = nodes(m)
+    tc = n.new("ShaderNodeTexCoord"); br = n.new("ShaderNodeTexBrick"); br.inputs["Scale"].default_value = scale
+    br.inputs["Color1"].default_value = (*hexc(a), 1); br.inputs["Color2"].default_value = (*hexc(b2), 1); br.inputs["Mortar"].default_value = (*hexc(mortar), 1)
+    br.inputs["Brick Width"].default_value = w; br.inputs["Row Height"].default_value = h; br.inputs["Mortar Size"].default_value = 0.015
+    l.new(tc.outputs["Object"], br.inputs["Vector"])
+    nz = n.new("ShaderNodeTexNoise"); nz.inputs["Scale"].default_value = 6; l.new(tc.outputs["Object"], nz.inputs["Vector"])
+    mx = n.new("ShaderNodeMix"); mx.data_type = "RGBA"; mx.blend_type = "MULTIPLY"; mx.inputs[0].default_value = 0.35
+    l.new(br.outputs["Color"], mx.inputs[6]); l.new(nz.outputs["Color"], mx.inputs[7])
+    l.new(mx.outputs[2], n["Principled BSDF"].inputs["Base Color"]); bump(n, l, br.outputs["Fac"], 0.6, 0.01)
+    return m
+def parquet(name, a="#8a5a32", b2="#6a3e1e"):
+    return brickmat(name, a, b2, "#2a160c", 3.0, 0.9, 0.18, 0.4)
+def cobbles(name, a="#7a7884", b2="#5a5864"):
+    m = principled(name, hexc(a), 0.7); t, n, l = nodes(m)
+    tc = n.new("ShaderNodeTexCoord"); vo = n.new("ShaderNodeTexVoronoi"); vo.inputs["Scale"].default_value = 3.5
+    try: vo.feature = "DISTANCE_TO_EDGE"
+    except Exception: pass
+    l.new(tc.outputs["Object"], vo.inputs["Vector"])
+    r = ramp(n, l, vo.outputs["Distance"], [(0.0, hexc("#2a2830")), (0.06, hexc(b2)), (0.3, hexc(a))])
+    l.new(r.outputs["Color"], n["Principled BSDF"].inputs["Base Color"]); bump(n, l, vo.outputs["Distance"], 0.8, 0.03)
+    return m
+def carpet(name, a="#8a1e22", border="#c8a24a"):
+    m = principled(name, hexc(a), 0.95); t, n, l = nodes(m)
+    tc = n.new("ShaderNodeTexCoord"); sep = n.new("ShaderNodeSeparateXYZ"); l.new(tc.outputs["Generated"], sep.inputs[0])
+    d = n.new("ShaderNodeMath"); d.operation = "SUBTRACT"; d.inputs[1].default_value = 0.5; l.new(sep.outputs[0], d.inputs[0])
+    ab = n.new("ShaderNodeMath"); ab.operation = "ABSOLUTE"; l.new(d.outputs[0], ab.inputs[0])
+    gt = n.new("ShaderNodeMath"); gt.operation = "GREATER_THAN"; gt.inputs[1].default_value = 0.38; l.new(ab.outputs[0], gt.inputs[0])
+    mx = n.new("ShaderNodeMix"); mx.data_type = "RGBA"; l.new(gt.outputs[0], mx.inputs[0]); mx.inputs[6].default_value = (*hexc(a), 1); mx.inputs[7].default_value = (*hexc(border), 1)
+    l.new(mx.outputs[2], n["Principled BSDF"].inputs["Base Color"])
+    nz = n.new("ShaderNodeTexNoise"); nz.inputs["Scale"].default_value = 200; l.new(tc.outputs["Object"], nz.inputs["Vector"]); bump(n, l, nz.outputs["Fac"], 0.2)
+    return m
+def gilt(name="gilt"): return principled(name, hexc("#d8a84a"), 0.28, 1.0)
+def mirror(name="mirror"): return principled(name, (0.8, 0.82, 0.85), 0.05, 1.0)
+def plaster(name, a, rough=0.85):
+    m = principled(name, hexc(a), rough); t, n, l = nodes(m)
+    tc = n.new("ShaderNodeTexCoord"); nz = n.new("ShaderNodeTexNoise"); nz.inputs["Scale"].default_value = 8; nz.inputs["Detail"].default_value = 6
+    l.new(tc.outputs["Object"], nz.inputs["Vector"])
+    r = ramp(n, l, nz.outputs["Fac"], [(0.3, tuple(c * 0.82 for c in hexc(a))), (0.7, hexc(a))])
+    l.new(r.outputs["Color"], n["Principled BSDF"].inputs["Base Color"]); bump(n, l, nz.outputs["Fac"], 0.15)
+    return m
+def light(kind, loc, energy, col, size=0.1, rot=(0, 0, 0), size_y=None):
+    bpy.ops.object.light_add(type=kind, location=loc, rotation=rot); o = bpy.context.object; d = o.data
+    d.energy = energy; d.color = col
+    if kind == "AREA":
+        d.shape = "RECTANGLE" if size_y else "SQUARE"; d.size = size
+        if size_y: d.size_y = size_y
+    elif kind in ("POINT", "SPOT"): d.shadow_soft_size = size
+    elif kind == "SUN": d.angle = size
+    return o
+def look_at(o, target):
+    d = Vector(target) - o.location; o.rotation_euler = d.to_track_quat("-Z", "Y").to_euler()
