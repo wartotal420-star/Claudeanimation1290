@@ -1,0 +1,80 @@
+{
+ "ch02": {
+  "seconds": 136.99,
+  "frames": 4110,
+  "sentences": 33,
+  "words": 406
+ },
+ "ch03": {
+  "seconds": 72.11,
+  "frames": 2163,
+  "sentences": 18,
+  "words": 213
+ },
+ "ch04": {
+  "seconds": 122.03,
+  "frames": 3661,
+  "sentences": 34,
+  "words": 370
+ },
+ "ch05": {
+  "seconds": 92.08,
+  "frames": 2762,
+  "sentences": 28,
+  "words": 277
+ },
+ "ch06": {
+  "seconds": 138.73,
+  "frames": 4162,
+  "sentences": 43,
+  "words": 423
+ },
+ "ch07": {
+  "seconds": 199.69,
+  "frames": 5991,
+  "sentences": 52,
+  "words": 587
+ },
+ "ch08": {
+  "seconds": 76.77,
+  "frames": 2303,
+  "sentences": 18,
+  "words": 213
+ },
+ "ch09": {
+  "seconds": 169.88,
+  "frames": 5096,
+  "sentences": 41,
+  "words": 486
+ },
+ "ch10": {
+  "seconds": 63.26,
+  "frames": 1898,
+  "sentences": 14,
+  "words": 177
+ },
+ "ch11": {
+  "seconds": 217.39,
+  "frames": 6522,
+  "sentences": 57,
+  "words": 660
+ },
+ "ch12": {
+  "seconds": 57.26,
+  "frames": 1718,
+  "sentences": 15,
+  "words": 165
+ },
+ "ch13": {
+  "seconds": 137.89,
+  "frames": 4137,
+  "sentences": 33,
+  "words": 406
+ },
+ "ch14": {
+  "seconds": 63.41,
+  "frames": 1902,
+  "sentences": 18,
+  "words": 201
+ }
+}

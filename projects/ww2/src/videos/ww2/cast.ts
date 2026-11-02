@@ -84,8 +84,8 @@ export type FxPlace = { key: string; cw: number; ch: number; draw: (p: Pen) => v
 export type CamInfo = { pos: THREE.Vector3; right: THREE.Vector3 };
 export type Stage = { places: Place[]; fx: FxPlace[] };
 
-const hh = (i: number, s = 0) => { const v = Math.sin(i * 127.1 + s * 311.7) * 43758.5453; return v - Math.floor(v); };
-const q = (v: number, n = 120) => Math.round(v * n) / n;
+export const hh = (i: number, s = 0) => { const v = Math.sin(i * 127.1 + s * 311.7) * 43758.5453; return v - Math.floor(v); };
+export const q = (v: number, n = 120) => Math.round(v * n) / n;
 const seedOf = (i: number) => ((i * 5 + 3) % 7) + 1;
 const tier = (d: number): [number, number, number] => d < 3.2 ? [1800, 3000, 3.0] : d < 6.5 ? [1080, 1800, 1.8] : d < 16 ? [480, 800, 0.8] : [240, 400, 0.4];
 const SUN = new THREE.Vector3(0.5, 0.75, -0.4).normalize();
@@ -103,8 +103,8 @@ const fkey = (o: object) => JSON.stringify(o, (_k, v) => (typeof v === "number" 
 // ---------------- the cast ----------------
 // Our own 1919-1933 cast: open suits with lapels, vests, ties, patterned cloth, varied hats and body shapes. Every crowd
 // extra is a different combination (rotated by index); no political insignia anywhere.
-const SK = ["#ffe2c2", "#f5c9a0", "#ecd0b6", "#e8c0a0", "#f8d8b8", "#d8a880"];
-const suit = (jacket: string, extra: Partial<Outfit> = {}): Outfit => ({ jacket, pants: jacket, boots: INK, buttons: "#c8c0b0", lapels: true, ...extra });
+export const SK = ["#ffe2c2", "#f5c9a0", "#ecd0b6", "#e8c0a0", "#f8d8b8", "#d8a880"];
+export const suit = (jacket: string, extra: Partial<Outfit> = {}): Outfit => ({ jacket, pants: jacket, boots: INK, buttons: "#c8c0b0", lapels: true, ...extra });
 export const CLEM = suit("#2e2e38", { hat: "bald", hair: "#f2f2f2", moustache: "#f6f6f4", stache: "walrus", brows: "#f6f6f4", bushy: true, build: "stout",
   nose: "big", vest: "#6a5236", watch: true, tie: "#a8323a", pocket: true, pattern: "pinstripe", patCol: "#6a6a80", skin: "#f5d6bc", cheeks: true });
 export const WILSON = suit("#34344a", { hat: "tophat", hatCol: "#22202a", glasses: true, build: "thin", nose: "long", pattern: "pinstripe", patCol: "#70708e",
@@ -118,7 +118,7 @@ export const HITLER: Outfit = { jacket: "#7a6040", pants: "#5a4a30", boots: INK,
 export const BAKER: Outfit = { jacket: "#f4f4f2", pants: "#7a7a84", boots: "#4a3426", hat: "chef", moustache: "#5a3a2a", stache: "handlebar", build: "fat",
   buttons: "#c8c8c8", rolled: true, apron: "#dfe8f2", scarf: "#c8323a", cheeks: true, nose: "big", brows: "#5a3a2a", bushy: true };
 const WK_BUILD: Outfit["build"][] = ["adult", "stout", "thin", "adult", "fat", "thin", "short", "adult", "stout", "adult"];
-const WORKERS: Outfit[] = [
+export const WORKERS: Outfit[] = [
   { jacket: "#d8cfb8", sleeves: "#d8cfb8", rolled: true, vest: "#4a3a30", hat: "flatcap", cap: "#5a5048", pants: "#4a4038", patch: "#6a5a48" },
   { jacket: "#4a5a6a", hat: "flatcap", cap: "#3a3a44", scarf: "#a8443a", pants: "#3a3a40", moustache: "#4a3426" },
   { jacket: "#c8d4e0", rolled: true, braces: "#6a3a2a", hat: "flatcap", cap: "#6a5a4a", pants: "#3a3a40", nose: "long" },
@@ -137,7 +137,7 @@ const M_HCOL = ["#2a2630", "#5a4a3a", "#3a3a44", "#6a5a48", "#2a3a4a", "#4a3a30"
 const M_NECK = ["#a83a3a", "#3a6aa8", "#c8a040", "#3a8a5a", "#8a3a8a", "#d86a3a"];
 const M_STACHE: (Outfit["stache"] | null)[] = [null, "plain", "walrus", "handlebar", "pencil", null];
 const M_BUILD: Outfit["build"][] = ["adult", "stout", "thin", "fat", "short", "adult"];
-const MEN: Outfit[] = M_COL.map((c, v) => suit(c, {
+export const MEN: Outfit[] = M_COL.map((c, v) => suit(c, {
   pattern: M_PAT[v], patCol: shade(c, v % 2 ? 1.5 : 0.7), hat: M_HAT[v], hatCol: M_HCOL[v % 6], hair: ["#3a2a1a", "#8a6a4a", "#1e1a18"][v % 3], cap: "#4a4448",
   tie: v % 2 ? undefined : M_NECK[v % 6], bowtie: v % 2 ? M_NECK[(v + 2) % 6] : undefined, vest: v % 3 === 0 ? ["#7a6a5a", "#c8bca0", "#5a2a2a", "#3a4a3a"][v % 4] : undefined,
   pocket: v % 2 === 0 ? "#f0e8d8" : v % 4 === 1 ? M_NECK[(v + 1) % 6] : false, cigar: v % 4 === 1, moustache: M_STACHE[v % 6] ? ["#3a2a1a", "#6a4a2a", "#9a9a9a"][v % 3] : undefined,
@@ -147,7 +147,7 @@ const MEN: Outfit[] = M_COL.map((c, v) => suit(c, {
 const W_DRESS = ["#a84a5a", "#4a6a9a", "#6a8a4a", "#c8904a", "#7a4a8a", "#3a7a7a", "#c86a6a", "#d8b860"];
 const W_PAT: Outfit["dressPat"][] = ["dots", undefined, "stripes", undefined, "check", "dots", undefined, "stripes"];
 const W_BUILD: Outfit["build"][] = ["adult", "thin", "stout", "adult", "short", "thin", "adult", "stout"];
-const WOMEN: Outfit[] = W_DRESS.map((d, v) => ({
+export const WOMEN: Outfit[] = W_DRESS.map((d, v) => ({
   jacket: [d, "#2a3a5a", "#e8dcc0", "#5a3a2a", d, "#c8b8a0", "#3a2a3a", d][v], pants: "#3a3a40", boots: ["#4a3426", "#2a2228", "#6a2a2a"][v % 3], dress: d,
   dressPat: W_PAT[v], dressCol2: v % 2 ? "#f4ecd8" : shade(d, 0.7), hat: v === 3 || v === 6 ? "hair" : "cloche", hatCol: ["#5a2a3a", "#2a3a5a", "#3a4a2a", "#8a5a2a", "#3a2a3a", "#2a4a4a", "#8a2a2a", "#6a5a3a"][v],
   band: ["#e8c45a", "#c84a4a", "#f2e2a8", "#3a2a2a", "#8ac0e0", "#e86a8a", "#2a2a2a", "#4a7a4a"][v], flower: ["#f2e2a8", "#ffffff", "#e86a8a", "#f2c84a"][v % 4],
@@ -155,30 +155,30 @@ const WOMEN: Outfit[] = W_DRESS.map((d, v) => ({
   pcollar: v % 3 === 2 ? "#f8f4ea" : undefined, scarf: v === 5 ? "#c8b8a0" : undefined, cheeks: v % 2 === 1, build: W_BUILD[v], socks: v % 2 ? "#e8d0b8" : "#c8a890",
   bow: v === 3 ? "#c84a4a" : v === 6 ? "#e8c45a" : undefined,
 }));
-const KIDS: Outfit[] = [
+export const KIDS: Outfit[] = [
   { ...KID, hat: "flatcap", cap: "#c84a3a", shorts: true, socks: "#e8e8e8", freckles: true, cheeks: true, braces: "#5a3a2a" },
   { ...KID, jacket: "#3a7ac8", hat: "flatcap", cap: "#f2c84a", pattern: "stripes", patCol: "#f4f0e6", shorts: true, socks: "#c84a4a", cheeks: true },
   { ...KID, jacket: "#c84a7a", hat: "hair", hair: "#d8a050", cap: undefined, dress: "#e86a9a", dressPat: "dots", dressCol2: "#fff4f8", pcollar: "#ffffff", bow: "#3a8ad8", cheeks: true, freckles: true },
 ];
-const OFFICIAL: Outfit = suit("#3a3e4a", { pants: "#2e3038", hat: "bald", hair: "#8a8a8a", moustache: "#5a5a5a", stache: "handlebar", buttons: "#c8a24a", glasses: true,
+export const OFFICIAL: Outfit = suit("#3a3e4a", { pants: "#2e3038", hat: "bald", hair: "#8a8a8a", moustache: "#5a5a5a", stache: "handlebar", buttons: "#c8a24a", glasses: true,
   vest: "#8a2a2a", tie: "#e8c45a", watch: true, build: "stout", nose: "big", cigar: true, pattern: "pinstripe", patCol: "#5a6070" });
-const SOLDIER = army(US, 0, { bayonet: true });
+export const SOLDIER = army(US, 0, { bayonet: true });
 /** Onoda, 1974: thin, stubbled, patched and faded kit, cap with neck flap, still holding his rifle */
-const ONODA = army(JP, 1, { build: "thin", worn: true, stubble: true, patch: "#c8b878", jacket: "#a89a62", pants: "#988a52", bayonet: false, webbing: "#5a4a30", nose: "round" });
+export const ONODA = army(JP, 1, { build: "thin", worn: true, stubble: true, patch: "#c8b878", jacket: "#a89a62", pants: "#988a52", bayonet: false, webbing: "#5a4a30", nose: "round" });
 /** soldiers of every army, rotated so no two neighbours match (helmets: M1 with net, Brodie, plain flared steel helmet) */
 const FRONT = [US, CA, GE];
-const trooper = (i: number): [Outfit, string] => { const b = FRONT[i % 3]; return [army(b, i), `tr${i % 3}_${i % 42}`]; };
-const TR_EXPR: Expr[] = ["stern", "angry", "worried", "stern", "pained", "gasp"];
+export const trooper = (i: number): [Outfit, string] => { const b = FRONT[i % 3]; return [army(b, i), `tr${i % 3}_${i % 42}`]; };
+export const TR_EXPR: Expr[] = ["stern", "angry", "worried", "stern", "pained", "gasp"];
 /** crowd extra i: rotate women / workers / men through every variant */
-const crowd = (i: number): [Outfit, string] => {
+export const crowd = (i: number): [Outfit, string] => {
   const k = i % 3;
   if (k === 0) { const v = (i * 5 + 3) % WOMEN.length; return [WOMEN[v], `w${v}`]; }
   if (k === 1) { const v = (i * 7 + 1) % WORKERS.length; return [WORKERS[v], `k${v}`]; }
   const v = (i * 5 + 2) % MEN.length; return [MEN[v], `m${v}`];
 };
 
-type Who = { i: number; o: Outfit; okey: string };
-const W_ = (o: Outfit, i: number, key: string): Who => ({ i, o, okey: key });
+export type Who = { i: number; o: Outfit; okey: string };
+export const W_ = (o: Outfit, i: number, key: string): Who => ({ i, o, okey: key });
 const person = (cam: CamInfo, w: Who, x: number, y: number, z: number, fo: FrontOpts, scale = 1, side?: { so: SideOpts; mirror: boolean }): Place => {
   const d = cam.pos.distanceTo(tmp.set(x, y + 1.2 * scale, z)) / scale;
   const [cw, ch, k] = tier(d), m = !!side?.mirror, light = light2D(cam, m), seed = seedOf(w.i);
@@ -188,7 +188,7 @@ const person = (cam: CamInfo, w: Who, x: number, y: number, z: number, fo: Front
 };
 const toSrgb = (v: number) => { const c = clamp01(v); return c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055; };
 const hexOf = (c: [number, number, number], k: number) => "#" + c.map((v) => Math.round(255 * toSrgb(1 - (1 - v) * k)).toString(16).padStart(2, "0")).join("");
-const blob = (out: Stage, x: number, y: number, z: number, sc = 1) => {
+export const blob = (out: Stage, x: number, y: number, z: number, sc = 1) => {
   const cc = hexOf([0.22, 0.2, 0.3], 1);
   out.fx.push({ key: `blob|contact|${cc}`, cw: 128, ch: 128, draw: (p) => fxContact(p, cc), x, y: y + 0.02, z, w: 0.55 * sc, h: 0.42 * sc, flat: true });
   if (LNAME === "gloom" || LNAME === "night") return;
@@ -196,28 +196,28 @@ const blob = (out: Stage, x: number, y: number, z: number, sc = 1) => {
   const len = 1.2 * sc, h = len + 0.5 * sc, c = 0.3 * h;
   out.fx.push({ key: `blob|shadow|${tc}`, cw: 128, ch: 256, draw: (p) => fxShadow(p, tc), x: x + ox * c, y: y + 0.015, z: z + oz * c, w: 0.7 * sc, h, flat: true, rot });
 };
-const mist = (out: Stage, x: number, y: number, z: number, w: number, t: number, i: number, col = "#e6ecf2", op = 1) =>
+export const mist = (out: Stage, x: number, y: number, z: number, w: number, t: number, i: number, col = "#e6ecf2", op = 1) =>
   out.fx.push({ key: `mist${col}`, cw: 512, ch: 256, draw: (p) => fxMist(p, col), x: x + 0.25 * Math.sin(t * 0.35 + i * 1.7), y, z, w, h: w * 0.5, soft: true, opacity: op });
-const stamp = (out: Stage, t: number, t0: number, text: string, x: number, y: number, z: number, w: number, flat = false, rot = 0) => {
+export const stamp = (out: Stage, t: number, t0: number, text: string, x: number, y: number, z: number, w: number, flat = false, rot = 0) => {
   if (t < t0 - 1 / FPS) return;
   const k = 1 + 0.6 * (1 - smooth((t - t0) / (4 / FPS)));
   out.fx.push({ key: `stamp${text}`, cw: 600, ch: 260, draw: (p) => fxStamp(p, text), x, y, z, w: w * k, h: w * k * (260 / 600), flat, rot });
 };
 
 // ---------------- staging by shot ----------------
-type Ctx = { cam: CamInfo; t: number; f: number; out: Stage; O: (x: number, y: number, z: number) => [number, number, number] };
-const P = (c: Ctx, w: Who, x: number, y: number, z: number, fo: FrontOpts, scale = 1, side?: { so: SideOpts; mirror: boolean }, shadow = true) => {
+export type Ctx = { cam: CamInfo; t: number; f: number; out: Stage; O: (x: number, y: number, z: number) => [number, number, number] };
+export const P = (c: Ctx, w: Who, x: number, y: number, z: number, fo: FrontOpts, scale = 1, side?: { so: SideOpts; mirror: boolean }, shadow = true) => {
   const [X, Y, Z] = c.O(x, y, z); c.out.places.push(person(c.cam, w, X, Y, Z, { blink: lidAt(c.t, w.i), ...fo }, scale, side)); if (shadow) blob(c.out, X, Y, Z, scale);
 };
-const F = (c: Ctx, fx: FxPlace) => { const [X, Y, Z] = c.O(fx.x, fx.y, fx.z); c.out.fx.push({ ...fx, x: X, y: Y, z: Z }); };
-const at = (f: number) => f / FPS;
+export const F = (c: Ctx, fx: FxPlace) => { const [X, Y, Z] = c.O(fx.x, fx.y, fx.z); c.out.fx.push({ ...fx, x: X, y: Y, z: Z }); };
+export const at = (f: number) => f / FPS;
 
 // ---- acting: beats timed to the narration (frame = word start s * 30) ----
 /** [start frame, gesture (null = arms at rest), expression (sticky until the next one)] */
-type Beat = [number, Pose | null, Expr?];
+export type Beat = [number, Pose | null, Expr?];
 type Act = { pose?: Pose; pk: number; expr: Expr };
 /** the gesture + expression at time t: each gesture eases in over `ri` s and eases out just before the next one */
-const act = (t: number, beats: Beat[], ri = 0.2): Act => {
+export const act = (t: number, beats: Beat[], ri = 0.2): Act => {
   let i = -1;
   for (let k = 0; k < beats.length; k++) if (t >= at(beats[k][0])) i = k;
   let expr: Expr = "neutral";
@@ -230,9 +230,9 @@ const act = (t: number, beats: Beat[], ri = 0.2): Act => {
   return { pose, pk: q(Math.min(inK, outK), 10), expr };
 };
 /** talking: alternate two mouths ~6 times a second while the line runs */
-const talk = (t: number, a: Expr, b: Expr) => (Math.floor(t * 6.5 + 0.6 * Math.sin(t * 2.3)) % 2 ? a : b);
+export const talk = (t: number, a: Expr, b: Expr) => (Math.floor(t * 6.5 + 0.6 * Math.sin(t * 2.3)) % 2 ? a : b);
 /** facing toward a target in the same set (screen side via the camera's right vector) */
-const toward = (c: Ctx, x: number, z: number, tx: number, tz: number): -1 | 1 =>
+export const toward = (c: Ctx, x: number, z: number, tx: number, tz: number): -1 | 1 =>
   (tx - x) * c.cam.right.x + (tz - z) * c.cam.right.z >= 0 ? 1 : -1;
 
 export const DOMINO_T0 = at(53), DOMINO_DT = 0.045;
@@ -516,6 +516,14 @@ const s28 = (c: Ctx) => {
 const STAGE: Record<number, (c: Ctx) => void> = { 1: s1, 2: s2, 3: s3, 4: s4, 5: s5, 9: s9, 10: s10, 11: s11, 12: s12, 13: s13, 14: s14, 15: s15, 16: s16, 17: s17, 18: s18, 19: s19, 20: s20,
   21: s21, 22: s22, 23: s23, 24: s24, 25: s25, 26: s26, 27: s27, 28: s28 };
 
+/** stage any shot table: used by the chapter modules (ch/chNN.ts); origin = the set's world offset */
+export const stageWith = (fn: ((c: Ctx) => void) | undefined, light: string, o: [number, number, number], f: number, cam: CamInfo, sun: THREE.Vector3): Stage => {
+  const out: Stage = { places: [], fx: [] };
+  LNAME = light; SUN.copy(sun);
+  const O = (x: number, y: number, z: number): [number, number, number] => [o[0] + x, o[1] + y, o[2] + z];
+  fn?.({ cam, t: f / FPS, f, out, O });
+  return out;
+};
 export const stage = (id: number, f: number, cam: CamInfo, sun: THREE.Vector3): Stage => {
   const out: Stage = { places: [], fx: [] }, s = SHOTS[id - 1], o = setOrigin(s.set as SetName);
   LNAME = s.light; SUN.copy(sun);

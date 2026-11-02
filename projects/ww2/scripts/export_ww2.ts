@@ -18,11 +18,16 @@ const cast = await import("../src/videos/ww2/cast");
 const sets = await import("../src/videos/ww2/sets");
 const lights = await import("../src/videos/ww2/lights");
 const { Pen } = await import("../src/videos/ww2/toon");
+// PART=chNN exports a chapter module (src/videos/ww2/ch/chNN.ts); without it, part 1 (story.ts + cast.ts)
+const PART = process.env.PART;
+const X: any = PART ? (await import(`../src/videos/ww2/ch/${PART}.ts`)).CH
+  : { TOTAL: story.TOTAL, SHOTS: story.SHOTS, XFADE: story.XFADE, CARDS: story.CARDS, camAt: story.camAt, dofAt: story.dofAt, stage: cast.stage };
+const shotById = (id: number) => X.SHOTS.find((s: any) => s.id === id);
 
 fs.mkdirSync(path.join(outDir, "cards"), { recursive: true });
 const done = new Set(fs.readdirSync(path.join(outDir, "cards")).map((f) => f.replace(".png", "")));
 // the drawing code's own hash is part of every card id, so editing toon.ts / cast.ts never reuses stale PNGs
-const SRCV = crypto.createHash("sha1").update(["toon.ts", "cast.ts"].map((f) => fs.readFileSync(new URL(`../src/videos/ww2/${f}`, import.meta.url))).join("|")).digest("hex").slice(0, 8);
+const SRCV = crypto.createHash("sha1").update(["toon.ts", "cast.ts", ...(PART ? [`ch/${PART}.ts`] : [])].map((f) => fs.readFileSync(new URL(`../src/videos/ww2/${f}`, import.meta.url))).join("|")).digest("hex").slice(0, 8);
 const hashOf = (key: string, w: number, h: number) => crypto.createHash("sha1").update(`${SRCV}|${w}x${h}|${key}`).digest("hex").slice(0, 16);
 const draw = (key: string, w: number, h: number, k: number, fn: (p: any) => void) => {
   const id = hashOf(key, w, h);
@@ -40,7 +45,7 @@ const sunCache = new Map<number, InstanceType<typeof THREE.Vector3>>();
 const shotSun = (s: any) => {
   let v = sunCache.get(s.id); if (v) return v;
   let fx = 0, fz = 0;
-  for (let f = s.a; f < s.b; f += 3) { const c = story.camAt(s.id, f), x = c.look[0] - c.pos[0], z = c.look[2] - c.pos[2], n = Math.hypot(x, z) || 1; fx += x / n; fz += z / n; }
+  for (let f = s.a; f < s.b; f += 3) { const c = X.camAt(s.id, f), x = c.look[0] - c.pos[0], z = c.look[2] - c.pos[2], n = Math.hypot(x, z) || 1; fx += x / n; fz += z / n; }
   const n = Math.hypot(fx, fz) || 1; fx /= n; fz /= n;
   const L = (lights.LIGHTS as any)[s.light];
   const az = THREE.MathUtils.degToRad(s.sunAz ?? L.az), el = THREE.MathUtils.degToRad(s.sunEl ?? L.el);
@@ -50,7 +55,7 @@ const shotSun = (s: any) => {
 
 // "all" runs the shots in batches as child processes: native canvas memory is not freed in time across ~6000 drawings
 // and one long process gets killed for memory.
-let ids: number[] = which === "all" ? story.SHOTS.map((s: any) => s.id) : which.split(",").map(Number);
+let ids: number[] = which === "all" ? X.SHOTS.map((s: any) => s.id) : which.split(",").map(Number);
 if (which === "all") {
   const { spawnSync } = await import("node:child_process");
   for (let i = 0; i < ids.length; i += 4) {
@@ -61,16 +66,16 @@ if (which === "all") {
 }
 const r3 = (v: number) => Math.round(v * 1000) / 1000;
 for (const id of ids) {
-  const s = story.SHOTS[id - 1], o = sets.setOrigin(s.set), x = story.XFADE[id] ?? 0, xn = story.XFADE[id + 1] ?? 0;
-  const f0 = Math.max(0, s.a - Math.ceil(x / 2)), f1 = Math.min(story.TOTAL, s.b + Math.ceil(xn / 2));
+  const s = shotById(id), o = sets.setOrigin(s.set), x = X.XFADE[id] ?? 0, xn = X.XFADE[id + 1] ?? 0;
+  const f0 = Math.max(0, s.a - Math.ceil(x / 2)), f1 = Math.min(X.TOTAL, s.b + Math.ceil(xn / 2));
   const frames: any[] = [];
   for (let f = f0; f < f1; f += step) {
-    const c = story.camAt(id, f);
+    const c = X.camAt(id, f);
     const pos = new THREE.Vector3(...c.pos), look = new THREE.Vector3(...c.look);
     const fwd = look.clone().sub(pos).normalize(), right = fwd.clone().cross(new THREE.Vector3(0, 1, 0)).normalize();
-    const st = cast.stage(id, f, { pos, right }, shotSun(s));
+    const st = X.stage(id, f, { pos, right }, shotSun(s));
     const L = (v: number[]) => [r3(v[0] - o[0]), r3(v[1] - o[1]), r3(v[2] - o[2])];
-    const d = story.dofAt(f);
+    const d = X.dofAt(f);
     const places = st.places.map((p: any) => {
       const [w, h, k] = p.size ?? [300, 500, 0.5];
       return { h: draw(p.key, w, h, k, p.draw), p: L([p.x, p.y, p.z]), s: r3(p.scale ?? 1), m: p.mirror ? 1 : 0, yaw: p.yaw ?? null, roll: p.roll ?? 0 };
@@ -87,7 +92,7 @@ for (const id of ids) {
 // timeline (shots, crossfades, total) + full-frame title / chapter card PNGs for the Blender assembly
 {
   const cardsOut: any[] = [];
-  story.CARDS.forEach((c: any, i: number) => {
+  X.CARDS.forEach((c: any, i: number) => {
     const W = story.W, H = story.H, cv = createCanvas(W, H), g = cv.getContext("2d") as any, title = c.kind === "title";
     if (!title) { g.fillStyle = "rgba(10,8,14,0.72)"; g.fillRect(0, 0, W, H); }
     else { const gr = g.createRadialGradient(W / 2, H / 2, H * 0.2, W / 2, H / 2, H * 0.9); gr.addColorStop(0, "rgba(0,0,0,0)"); gr.addColorStop(1, "rgba(0,0,0,0.55)"); g.fillStyle = gr; g.fillRect(0, 0, W, H); }
@@ -101,7 +106,7 @@ for (const id of ids) {
     const file = `titlecard${i}.png`; fs.writeFileSync(path.join(outDir, file), cv.toBuffer("image/png"));
     cardsOut.push({ a: c.a, b: c.b, file });
   });
-  fs.writeFileSync(path.join(outDir, "timeline.json"), JSON.stringify({ total: story.TOTAL, fps: story.FPS, xfade: story.XFADE,
-    shots: story.SHOTS.map((s: any) => ({ id: s.id, a: s.a, b: s.b })), cards: cardsOut }));
+  fs.writeFileSync(path.join(outDir, "timeline.json"), JSON.stringify({ total: X.TOTAL, fps: story.FPS, xfade: X.XFADE,
+    shots: X.SHOTS.map((s: any) => ({ id: s.id, a: s.a, b: s.b })), cards: cardsOut }));
   console.log("timeline + title cards written");
 }

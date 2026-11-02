@@ -62,15 +62,15 @@ export const CARDS: { a: number; b: number; kind: "title" | "chapter"; lines: st
 
 // ---------------- camera ----------------
 export type Cam = { pos: V3; look: V3; fov: number; roll: number };
-type Shot = Partial<Cam> & { pos: V3; look: V3 };
-type Key = { f: number; dur?: number; cut?: boolean; s: (f: number) => Shot };
+export type Shot = Partial<Cam> & { pos: V3; look: V3 };
+export type Key = { f: number; dur?: number; cut?: boolean; s: (f: number) => Shot };
 export const glide = (u: number) => { const x = clamp01(u); return x * x * x * (x * (6 * x - 15) + 10); };
 const mixC = (a: Cam, b: Cam, k: number): Cam => ({
   pos: a.pos.map((v, i) => v + (b.pos[i] - v) * k) as V3, look: a.look.map((v, i) => v + (b.look[i] - v) * k) as V3,
   fov: a.fov + (b.fov - a.fov) * k, roll: a.roll + (b.roll - a.roll) * k,
 });
 const full = (c: Shot): Cam => ({ fov: 40, roll: 0, ...c });
-const run = (keys: Key[], f: number) => {
+export const run = (keys: Key[], f: number) => {
   let cur = full(keys[0].s(f));
   for (let i = 1; i < keys.length; i++) {
     const k = keys[i];
@@ -79,21 +79,21 @@ const run = (keys: Key[], f: number) => {
   }
   return cur;
 };
-const pushK = (f: number, f0: number, rate: number, punch = 0, n = 35) => {
+export const pushK = (f: number, f0: number, rate: number, punch = 0, n = 35) => {
   const x = Math.max(0, f - f0);
   let s = rate * x;
   if (punch > rate) for (let i = 0; i < Math.min(x, n); i++) s += (punch - rate) * Math.max(0, Math.min(1, (i + 0.5) / 8, (n - i - 0.5) / 8));
   return Math.exp(-s);
 };
 /** dolly push in set-local coordinates */
-const D = (set: SetName, pos: V3, look: V3, f: number, f0: number, rate = 0.0025, rest: Partial<Cam> = {}, punch = 0) => {
-  const o = setOrigin(set), k = pushK(f, f0, rate, punch);
+export const D = (set: SetName | string, pos: V3, look: V3, f: number, f0: number, rate = 0.0025, rest: Partial<Cam> = {}, punch = 0) => {
+  const o = setOrigin(set as SetName), k = pushK(f, f0, rate, punch);
   return { pos: [o[0] + look[0] + (pos[0] - look[0]) * k, o[1] + look[1] + (pos[1] - look[1]) * k, o[2] + look[2] + (pos[2] - look[2]) * k] as V3,
     look: [o[0] + look[0], o[1] + look[1], o[2] + look[2]] as V3, ...rest };
 };
 /** pan/track: camera and target both slide by (dx, dz) per frame */
-const Tr = (set: SetName, pos: V3, look: V3, f: number, f0: number, v: V3, rest: Partial<Cam> = {}) => {
-  const o = setOrigin(set), t = f - f0;
+export const Tr = (set: SetName | string, pos: V3, look: V3, f: number, f0: number, v: V3, rest: Partial<Cam> = {}) => {
+  const o = setOrigin(set as SetName), t = f - f0;
   return { pos: [o[0] + pos[0] + v[0] * t, o[1] + pos[1] + v[1] * t, o[2] + pos[2] + v[2] * t] as V3, look: [o[0] + look[0] + v[0] * t, o[1] + look[1] + v[1] * t, o[2] + look[2] + v[2] * t] as V3, ...rest };
 };
 export const DOM0: V3 = [0.47, 0.02, 1.49];
@@ -174,6 +174,24 @@ const CAMS: Record<number, Key[]> = {
 };
 
 const KICKS: [number, number][] = [[53 / 30, 0.4], [1410 / 30, 1.2], [2166 / 30, 0.9], [2627 / 30, 0.7], [2678 / 30, 0.7], [3312 / 30, 0.5]];
+/** screen shake: [time s, strength] list -> kick amount at time t */
+export const kicker = (K: [number, number][]) => (t: number) => {
+  let a = 0;
+  for (const [t0, g] of K) {
+    const n = Math.floor((t - t0) * FPS + 1e-6);
+    if (n >= 0 && n < 7) a += g * (n % 2 ? -1 : 1) * (1 - n / 7) ** 1.5;
+  }
+  return a;
+};
+/** camera at frame f: keyframed moves + kicks */
+export const camFrom = (keys: Key[], f: number, kick: (t: number) => number): Cam => {
+  const c = run(keys, f), a = kick(f / FPS);
+  if (!a) return c;
+  const d: V3 = [c.look[0] - c.pos[0], c.look[1] - c.pos[1], c.look[2] - c.pos[2]];
+  const L = Math.hypot(...d), h = Math.hypot(d[0], d[2]) || 1;
+  const m = (3 / 640) * Math.tan((c.fov * Math.PI) / 360) * L * a;
+  return { ...c, look: [c.look[0] - (d[2] / h) * m, c.look[1] + 0.6 * m, c.look[2] + (d[0] / h) * m], roll: c.roll + a * 0.004 };
+};
 export const kickAt = (t: number) => {
   let a = 0;
   for (const [t0, g] of KICKS) {
@@ -203,6 +221,13 @@ export const DOF: Dof[] = [
   { f: 2707, cInf: 8 }, { f: 2850, dur: 26, cInf: 11 }, { f: 2902, cInf: 4 }, { f: 3115, cInf: 13 }, { f: 3182, cInf: 6 },
   { f: 3287, cInf: 13 }, { f: 3355, cInf: 13 }, { f: 3405, cInf: 8 }, { f: 3495, cInf: 4 },
 ];
+/** lens table -> lens at frame f */
+export const dofFrom = (T: Dof[]) => (f: number) => {
+  let i = 0; while (i + 1 < T.length && f >= T[i + 1].f) i++;
+  const d = T[i], p = T[Math.max(0, i - 1)];
+  const k = d.dur ? Math.min(1, (f - d.f) / d.dur) : 1;
+  return { cInf: p.cInf + (d.cInf - p.cInf) * k, focus: d.focus };
+};
 export const dofAt = (f: number) => {
   let i = 0; while (i + 1 < DOF.length && f >= DOF[i + 1].f) i++;
   const d = DOF[i], p = DOF[Math.max(0, i - 1)];
