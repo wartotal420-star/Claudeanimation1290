@@ -13,7 +13,7 @@
 - Camera close: mostly close-ups and medium shots, characters fill the frame, low angles, foreground props framing.
 - Distinct main characters (outfits, colours, props) that act out every line; no rows of identical standing extras.
 - Hook = punchy close-up of the most absurd moment in the first frame.
-- Captions: ask the user (reference uses one-word captions; skill default was none).
+- Captions: none in long-form (YouTube auto-captions). For Shorts, ask the user.
 - Workflow: user records voice (Fish Audio) and renders on their Mac (`projects/<name>/render_mac.sh`, ~1-2 min).
   Have the user render an early preview and send screenshots before the final; check terrain/height functions
   for clamps (a max(h, 0) bug lifted the sea bed to the water line in Kiska).
