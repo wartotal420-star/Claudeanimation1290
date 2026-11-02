@@ -1174,7 +1174,7 @@ export const fxChart = (p: Pen, prog: number, crash: number) => {
 export const drawTag = (g: CanvasRenderingContext2D, text: string) => {
   g.fillStyle = "#f6efdc"; g.fillRect(0, 0, 768, 230); g.strokeStyle = "#3a2618"; g.lineWidth = 14; g.strokeRect(7, 7, 754, 216);
   g.fillStyle = "#3a2618"; g.font = "bold 40px Georgia, serif"; g.textAlign = "center"; g.fillText("1 BROT", 384, 60);
-  g.fillStyle = "#b8202c"; g.font = "bold 92px Georgia, serif"; g.fillText(text, 384, 170);
+  g.fillStyle = "#b8202c"; let px = 92; g.font = `bold ${px}px Georgia, serif`; while (g.measureText(text).width > 700 && px > 40) { px -= 4; g.font = `bold ${px}px Georgia, serif`; } g.fillText(text, 384, 170);
 };
 /** padlock + chain across a door, on a 400 x 400 canvas */
 export const fxPadlock = (p: Pen) => {

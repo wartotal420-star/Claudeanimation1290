@@ -235,7 +235,7 @@ const s15 = (c: Ctx) => {
   const { t } = c, u = smooth((t - at(1815)) / 1.6);
   P(c, W_(BAKER, 72, "baker"), 0.9, 0, 3.0, { mode: "stand", expr: "smug", prop: "bread" });
   P(c, W_(WORKERS[0], 74, "wk0"), -4 + 3.4 * u, 0, -1.0 + 2.0 * u, { mode: u < 1 ? "march" : "stand", phase: q((t * 2.2) % 1, 60), expr: t > at(1860) ? "shock" : "grin", prop: "cash", lift: 70 });
-  P(c, W_(WOMEN[0], 73, "w0"), -2.0, 0, -0.9, { mode: "stand", expr: "nervous", facing: 1 });
+  P(c, W_(WOMEN[0], 73, "w0"), -3.4, 0, 0.8, { mode: "stand", expr: "nervous", facing: 1 });
 };
 // playroom
 const s16 = (c: Ctx) => {
