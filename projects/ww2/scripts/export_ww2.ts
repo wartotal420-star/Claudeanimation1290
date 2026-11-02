@@ -46,7 +46,17 @@ const shotSun = (s: any) => {
   v = new THREE.Vector3(hx * Math.cos(el), Math.sin(el), hz * Math.cos(el)).normalize(); sunCache.set(s.id, v); return v;
 };
 
-const ids = which === "all" ? story.SHOTS.map((s: any) => s.id) : which.split(",").map(Number);
+// "all" runs the shots in batches as child processes: native canvas memory is not freed in time across ~6000 drawings
+// and one long process gets killed for memory.
+let ids: number[] = which === "all" ? story.SHOTS.map((s: any) => s.id) : which.split(",").map(Number);
+if (which === "all") {
+  const { spawnSync } = await import("node:child_process");
+  for (let i = 0; i < ids.length; i += 4) {
+    const r = spawnSync(process.execPath, [...process.execArgv, process.argv[1], outDir, ids.slice(i, i + 4).join(","), stepS], { stdio: "inherit" });
+    if (r.status !== 0) { console.error(`export batch ${ids.slice(i, i + 4)} failed (${r.status ?? r.signal})`); process.exit(1); }
+  }
+  ids = [];
+}
 const r3 = (v: number) => Math.round(v * 1000) / 1000;
 for (const id of ids) {
   const s = story.SHOTS[id - 1], o = sets.setOrigin(s.set), x = story.XFADE[id] ?? 0, xn = story.XFADE[id + 1] ?? 0;
