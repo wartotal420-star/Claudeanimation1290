@@ -55,7 +55,7 @@ export const LIGHTS: Record<LightName, LightPreset> = {
   // moonlit fog night (also the dark room)
   night: {
     az: 35, el: 40,
-    lit: [0.3, 0.38, 0.72], shade: [0.08, 0.1, 0.2], lift: [0.03, 0.04, 0.09], lambert: 0.35, sideK: 0.84, term: 0.25,
+    lit: [0.62, 0.68, 1.0], shade: [0.16, 0.16, 0.3], lift: [0.05, 0.05, 0.12], lambert: 0.35, sideK: 0.84, term: 0.25,
     charTint: [0.62, 0.72, 1.0], charShade: 0.8, charGrad: 0.1, bodyGrad: 0.25, sideTint: [0.7, 0.78, 1.0],
     blob: [0.6, 0.62, 0.8], actorShadow: false,
     top: "#141b33", hor: "#2d3b5e", skyCurve: [0, 0.5, 0.6], fog: "#2b385a", fogNear: 6, fogFar: 85, sunDisc: "#000000",
@@ -65,7 +65,7 @@ export const LIGHTS: Record<LightName, LightPreset> = {
   // warm lamp-lit interior: amber key, deep blue-violet shadows
   interior: {
     az: 55, el: 50,
-    lit: [1.6, 1.2, 0.78], shade: [0.2, 0.18, 0.32], lift: [0.04, 0.04, 0.1], lambert: 0.4, sideK: 0.84, term: 0.18,
+    lit: [1.62, 1.24, 0.82], shade: [0.26, 0.21, 0.29], lift: [0.05, 0.04, 0.08], lambert: 0.4, sideK: 0.84, term: 0.18,
     charTint: [1.0, 0.88, 0.74], charShade: 0.85, charGrad: 0.1, bodyGrad: 0.24, sideTint: [0.85, 0.82, 0.95],
     blob: [0.6, 0.55, 0.6], actorShadow: true,
     top: "#1a1424", hor: "#2a1e2a", skyCurve: [0, 0.5, 0.6], fog: "#2a2030", fogNear: 25, fogFar: 140, sunDisc: "#000000",
@@ -85,7 +85,7 @@ export const LIGHTS: Record<LightName, LightPreset> = {
   // war dusk: orange low sun, smoky purple shadows
   dusk: {
     az: 20, el: 10,
-    lit: [1.55, 0.9, 0.45], shade: [0.17, 0.14, 0.28], lift: [0.05, 0.04, 0.12], lambert: 0.35, sideK: 0.82, term: 0.1,
+    lit: [1.65, 1.08, 0.6], shade: [0.27, 0.2, 0.24], lift: [0.06, 0.04, 0.06], lambert: 0.35, sideK: 0.82, term: 0.1,
     charTint: [1.0, 0.82, 0.62], charShade: 0.86, charGrad: 0.1, bodyGrad: 0.25, sideTint: [0.85, 0.78, 0.95],
     blob: [0.7, 0.66, 0.85], actorShadow: true,
     top: "#3a2a5a", hor: "#ff9a5a", skyCurve: [0.05, 0.6, 1.0], fog: "#c8785a", fogNear: 40, fogFar: 320, sunDisc: "#ffb070",

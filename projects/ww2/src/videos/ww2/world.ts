@@ -151,7 +151,7 @@ export class World {
       (this.scroll.material as THREE.MeshLambertMaterial).map!.repeat.set(1, len / 1.5);
     }
     const pile = cur.dyn.cashPile;
-    if (pile) { const k = id === 13 ? 0.15 + 3.2 * smooth((f - 1560) / 110) : 1.2; pile.children.forEach((ch, i) => ch.scale.set(1, k * (0.6 + 0.4 * ((i * 7) % 5) / 4), 1)); }
+    if (pile) { const k = id === 13 ? 0.4 + 3.6 * smooth((f - 1560) / 110) : 2; pile.children.forEach((ch, i) => ch.scale.set(1, k * (0.6 + 0.4 * ((i * 7) % 5) / 4), 1)); }
     const tagM = cur.dyn.priceTag as THREE.Mesh | undefined;
     if (tagM) { const m = tagM.material as THREE.MeshBasicMaterial, tx = this.tag(tagAt(f)); if (m.map !== tx) { m.map = tx; m.color.setScalar(1.15); m.needsUpdate = true; } }
     // ---- cast + effects ----

@@ -160,7 +160,7 @@ const s2 = (c: Ctx) => {
     const x = -1 + (i % 3) * 1.4 + hh(i) * 0.4, z = 7 + Math.floor(i / 3) * 3 - 0.9 * (c.t - at(140)) * 0;
     P(c, W_(army(US, i), i, `fs${i % 4}`), x, 0, z - 1.2 * (c.t - at(140)), { mode: "march", phase: q(((c.t * 1.8 + hh(i, 2)) % 1), 60), expr: "stern", lift: 40 });
   }
-  for (let i = 0; i < 6; i++) mist(c.out, -12 + i * 5, 2 + (i % 2), 18 + i * 4, 12, c.t, i, "#5a4a52", 0.7);
+  for (let i = 0; i < 6; i++) mist(c.out, -14 + i * 6, 3 + (i % 2), 32 + i * 5, 14, c.t, i, "#6a5048", 0.55);
 };
 const s3 = (c: Ctx) => {
   for (let i = 0; i < 4; i++) {
@@ -213,7 +213,7 @@ const s12 = (c: Ctx) => {
 const s13 = (c: Ctx) => {
   const { t } = c;
   P(c, W_(OFFICIAL, 70, "off"), 2.3, 0, 1.7, { mode: "stand", expr: t > at(1600) ? "grin" : "neutral", wave: q(Math.sin(t * 6), 20) });
-  P(c, W_(WORKERS[1], 71, "wk1"), -2.0, 0, 0.0, { mode: "stand", expr: t > at(1620) ? "shock" : "neutral", prop: "cash", facing: 1 });
+  P(c, W_(WORKERS[1], 71, "wk1"), -2.6, 0, 1.6, { mode: "stand", expr: t > at(1620) ? "shock" : "neutral", prop: "cash", facing: 1 });
   const n = Math.floor(6 + 30 * smooth((t - at(1440)) / 7));
   for (let i = 0; i < n; i++) {
     const age = ((t * 0.6 + hh(i, 1)) % 1.4) / 1.4, a = hh(i, 2) * Math.PI * 2;
@@ -229,7 +229,7 @@ const s26 = (c: Ctx) => {
 export const tagAt = (f: number) => (f < 1858 ? "200.000.000.000 M" : f < 1890 ? "350.000.000.000 M" : "500.000.000.000 M");
 const s14 = (c: Ctx) => {
   P(c, W_(BAKER, 72, "baker"), 0.9, 0, 3.0, { mode: "stand", expr: "smug", prop: "bread" });
-  P(c, W_(WOMEN[0], 73, "w0"), -2.0, 0, -0.9, { mode: "stand", expr: c.t > at(1755) ? "shock" : "nervous", facing: 1 });
+  P(c, W_(WOMEN[0], 73, "w0"), -2.3, 0, -0.9, { mode: "stand", expr: c.t > at(1755) ? "shock" : "nervous", facing: 1 });
 };
 const s15 = (c: Ctx) => {
   const { t } = c, u = smooth((t - at(1815)) / 1.6);
@@ -315,8 +315,8 @@ const s27 = (c: Ctx) => {
 const s28 = (c: Ctx) => {
   torches(c, 14, 33);
   P(c, W_(HITLER, 9, "hit"), 0, 6.3, 45.3, { mode: "stand", expr: "smug" }, 1, undefined, false);
-  F(c, { key: "bigshadow", cw: 600, ch: 1000, draw: (p) => { bodyFront(p, HITLER, { mode: "stand", expr: "smug", seed: 2 }); const g = p.g; g.globalCompositeOperation = "source-in"; g.fillStyle = "rgba(8,6,14,0.75)"; g.fillRect(0, 0, 600, 1000); g.globalCompositeOperation = "source-over"; },
-    x: 1.6, y: 10.5, z: 45.92, w: 9, h: 15, soft: true, opacity: 0.8 });
+  F(c, { key: "bigshadow", cw: 600, ch: 1000, draw: (p) => { bodyFront(p, HITLER, { mode: "stand", expr: "smug", seed: 2 }); const g = p.g; g.globalCompositeOperation = "source-in"; g.fillStyle = "rgba(4,2,8,0.92)"; g.fillRect(0, 0, 600, 1000); g.globalCompositeOperation = "source-over"; },
+    x: 1.6, y: 10.5, z: 45.92, w: 9, h: 15, soft: true, opacity: 1 });
 };
 
 const STAGE: Record<number, (c: Ctx) => void> = { 1: s1, 2: s2, 3: s3, 4: s4, 5: s5, 9: s9, 10: s10, 11: s11, 12: s12, 13: s13, 14: s14, 15: s15, 16: s16, 17: s17, 18: s18, 19: s19, 20: s20,

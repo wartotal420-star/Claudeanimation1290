@@ -207,12 +207,61 @@ export const flagBanner = (b: Batch, g: THREE.Group, x: number, y: number, z: nu
   cyl(b, C("#c8a24a"), x - w / 2 - 0.05, y + h / 2 - 0.02, z, 0.02, 0.04);
   b.add(boxGeo(V(x - w / 2 - 0.05, y + h / 2, z - 0.02), V(x + w / 2 + 0.05, y + h / 2 + 0.04, z + 0.02)), C("#c8a24a"));
 };
-const tank = (b: Batch, x: number, z: number, yaw: number, col = "#5a5e48") => {
-  const T0 = M4(x, 0, z, yaw), m = C(col), dk = C("#2a2a2a");
-  b.add(boxGeo(V(-2.8, 0.5, -1.4), V(2.8, 1.5, 1.4)), m, T0);
-  for (const s of [-1, 1]) b.add(boxGeo(V(-3.0, 0, s * 1.4 - 0.45), V(3.0, 0.95, s * 1.4 + 0.45)), dk, T0);
-  b.add(boxGeo(V(-1.2, 1.5, -0.95), V(1.0, 2.3, 0.95)), m, T0);
-  const gun = new THREE.CylinderGeometry(0.1, 0.12, 3.2, 10); gun.rotateZ(Math.PI / 2); gun.translate(2.4, 1.95, 0); b.add(gun, dk, T0);
+const tank = (b: Batch, x: number, z: number, yaw: number, col = "#5e6244") => {
+  // medium tank: sloped hull (extruded side profile), 5 road wheels + idler/sprocket a side, segmented tracks,
+  // rounded cast turret with mantlet and long gun, hatches, tools, spare track links. Nose toward +x of yaw.
+  const T0 = M4(x, 0, z, yaw), m = C(col), dk = C("#2a2a26"), steel = C("#3e4038"), rub = C("#1e1e1c");
+  const prof = new THREE.Shape([new THREE.Vector2(-3.0, 0.55), new THREE.Vector2(2.4, 0.55), new THREE.Vector2(3.1, 1.05), new THREE.Vector2(2.2, 1.75),
+    new THREE.Vector2(-2.7, 1.75), new THREE.Vector2(-3.1, 1.25)]);
+  const hull = new THREE.ExtrudeGeometry(prof, { depth: 2.3, bevelEnabled: true, bevelSize: 0.05, bevelThickness: 0.05, bevelSegments: 1 }); hull.translate(0, 0, -1.15);
+  b.add(hull, m, T0);
+  for (const s of [-1, 1]) {
+    // track run: top + bottom belts with link texture, and the curved ends
+    const tr = T("track", tx("track", 256, 64, (q) => { q.fillStyle = "#24241f"; q.fillRect(0, 0, 256, 64); for (let i = 0; i < 256; i += 16) { q.fillStyle = "#4a4a40"; q.fillRect(i + 2, 4, 11, 56); q.fillStyle = "#16160f"; q.fillRect(i + 13, 0, 3, 64); } }), 6, 1);
+    b.add(boxGeo(V(-2.9, 0.0, s * 1.2 - 0.33), V(2.9, 0.16, s * 1.2 + 0.33)), tr, T0);
+    b.add(boxGeo(V(-2.7, 0.92, s * 1.2 - 0.33), V(2.6, 1.02, s * 1.2 + 0.33)), tr, T0);
+    for (let k = 0; k < 5; k++) { const w = new THREE.CylinderGeometry(0.36, 0.36, 0.5, 16); w.rotateX(Math.PI / 2); w.translate(-1.95 + k * 0.98, 0.42, s * 1.2); b.add(w, steel, T0);
+      const hub = new THREE.CylinderGeometry(0.13, 0.13, 0.54, 10); hub.rotateX(Math.PI / 2); hub.translate(-1.95 + k * 0.98, 0.42, s * 1.2); b.add(hub, rub, T0); }
+    for (const [ex, er] of [[2.75, 0.42], [-2.85, 0.36]] as const) { const w = new THREE.CylinderGeometry(er, er, 0.58, 16); w.rotateX(Math.PI / 2); w.translate(ex, 0.6, s * 1.2); b.add(w, dk, T0); }
+    b.add(boxGeo(V(-2.9, 1.0, s * 1.2 - 0.38), V(2.7, 1.08, s * 1.2 + 0.38)), m, T0); // mudguard
+    for (let k = 0; k < 3; k++) b.add(boxGeo(V(2.1 + k * 0.22, 1.1, s * 0.75 - 0.25), V(2.28 + k * 0.22, 1.16, s * 0.75 + 0.25)), dk, T0); // spare links
+  }
+  // turret: squashed sphere + flat top, mantlet, gun with muzzle brake, commander hatch, periscopes
+  const tur = new THREE.SphereGeometry(1.15, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2); tur.scale(1.05, 0.62, 0.95); tur.translate(-0.35, 1.75, 0); b.add(tur, m, T0);
+  b.add(boxGeo(V(0.55, 1.85, -0.45), V(0.95, 2.35, 0.45)), m, T0);
+  const gun = new THREE.CylinderGeometry(0.08, 0.1, 3.0, 12); gun.rotateZ(Math.PI / 2); gun.translate(2.4, 2.1, 0); b.add(gun, steel, T0);
+  const brake = new THREE.CylinderGeometry(0.14, 0.14, 0.32, 12); brake.rotateZ(Math.PI / 2); brake.translate(3.85, 2.1, 0); b.add(brake, dk, T0);
+  b.add(new THREE.CylinderGeometry(0.34, 0.36, 0.2, 14).translate(-0.6, 2.42, 0.3), m, T0);
+  b.add(new THREE.CylinderGeometry(0.3, 0.3, 0.06, 14).translate(-0.6, 2.55, 0.3), dk, T0);
+  for (const pz of [-0.5, -0.1]) b.add(boxGeo(V(0.1, 2.35, pz - 0.06), V(0.24, 2.48, pz + 0.06)), dk, T0);
+  // engine deck grilles, tow cable, jerry cans, a stowed shovel
+  for (let k = 0; k < 4; k++) b.add(boxGeo(V(-2.6 + k * 0.32, 1.75, -0.7), V(-2.42 + k * 0.32, 1.79, 0.7)), dk, T0);
+  for (const s of [-1, 1]) b.add(boxGeo(V(-2.95, 1.2, s * 0.9 - 0.18), V(-2.75, 1.6, s * 0.9 + 0.18)), C("#4a5236"), T0);
+  b.add(boxGeo(V(0.4, 1.77, 0.95), V(1.9, 1.81, 1.05)), C("#7a5a32"), T0);
+};
+/** warship: raked hull with sheer and a pointed bow, stepped bridge, two raked funnels, four twin turrets, masts */
+const warship = (b: Batch, x: number, z: number, yaw: number, L = 110, Bm = 11, col = "#68727e") => {
+  const T0 = M4(x, 0, z, yaw), hm = C(col), dk = C("#3a3e46"), deck = C("#8a7a64"), red = C("#7a3430");
+  const sh = new THREE.Shape([new THREE.Vector2(-L / 2, -Bm / 2), new THREE.Vector2(L * 0.25, -Bm / 2), new THREE.Vector2(L / 2, 0), new THREE.Vector2(L * 0.25, Bm / 2), new THREE.Vector2(-L / 2, Bm / 2 * 0.92)]);
+  const hull = new THREE.ExtrudeGeometry(sh, { depth: 6, bevelEnabled: false }); hull.rotateX(-Math.PI / 2); hull.translate(0, -1.5, 0);
+  const p = hull.attributes.position as THREE.BufferAttribute;
+  for (let i = 0; i < p.count; i++) { const hx = p.getX(i), y = p.getY(i); if (y > 0) p.setY(i, y + 1.6 * Math.max(0, (hx / (L / 2))) ** 2); } // sheer: the bow rises
+  hull.computeVertexNormals(); b.add(hull, hm, T0);
+  const boot = new THREE.ExtrudeGeometry(sh, { depth: 0.7, bevelEnabled: false }); boot.rotateX(-Math.PI / 2); boot.scale(1.003, 1, 1.02); boot.translate(0, -0.3, 0); b.add(boot, red, T0);
+  const dg = new THREE.ShapeGeometry(sh); dg.rotateX(-Math.PI / 2); dg.translate(0, 4.52, 0); b.add(dg, deck, T0);
+  // stepped superstructure + bridge with windows
+  b.add(boxGeo(V(-L * 0.14, 4.5, -Bm * 0.32), V(L * 0.12, 8, Bm * 0.32)), hm, T0);
+  b.add(boxGeo(V(L * 0.02, 8, -Bm * 0.26), V(L * 0.12, 11, Bm * 0.26)), hm, T0);
+  b.add(boxGeo(V(L * 0.05, 11, -Bm * 0.2), V(L * 0.12, 13, Bm * 0.2)), hm, T0);
+  b.add(boxGeo(V(L * 0.121, 11.6, -Bm * 0.18), V(L * 0.123, 12.3, Bm * 0.18)), C("#1e2228"), T0);
+  for (const fx of [-0.03, -0.1]) { const f = new THREE.CylinderGeometry(1.4, 1.7, 7, 16); f.rotateZ(0.12); f.translate(L * fx, 11, 0); b.add(f, hm, T0); const cap = new THREE.CylinderGeometry(1.45, 1.45, 0.8, 16); cap.rotateZ(0.12); cap.translate(L * fx - 0.4, 14.3, 0); b.add(cap, dk, T0); }
+  for (const mx of [L * 0.08, -L * 0.22]) { b.add(new THREE.CylinderGeometry(0.18, 0.28, 16, 6).translate(mx, 16, 0), dk, T0); b.add(boxGeo(V(mx - 0.1, 19, -3), V(mx + 0.1, 19.2, 3)), dk, T0); }
+  for (const [tx, dir, h] of [[L * 0.3, 1, 5.2], [L * 0.2, 1, 6.6], [-L * 0.25, -1, 5.2], [-L * 0.35, -1, 4.6]] as const) {
+    const tu = new THREE.CylinderGeometry(2.2, 2.4, 1.6, 16); tu.translate(tx, h, 0); b.add(tu, hm, T0);
+    b.add(boxGeo(V(tx - 1.2, h, -1.6), V(tx + 1.6, h + 1.5, 1.6)).translate(dir < 0 ? -0.4 : 0, 0, 0), hm, T0);
+    for (const s of [-0.6, 0.6]) { const gb = new THREE.CylinderGeometry(0.2, 0.25, 8, 10); gb.rotateZ(Math.PI / 2); gb.translate(tx + dir * 5.2, h + 0.8, s); b.add(gb, dk, T0); }
+  }
+  for (let k = 0; k < 8; k++) b.add(new THREE.CylinderGeometry(0.6, 0.6, 2.4, 10).rotateX(Math.PI / 2).translate(-L * 0.05 + k * 2.4 - 8, 5.6, Bm * 0.36), C("#e8e0cc"), T0); // lifeboats
 };
 const tree = (b: Batch, x: number, z: number, h: number, kind: number) => {
   cyl(b, C(kind === 2 ? "#6a5a3a" : "#4a3220"), x, 0, z, 0.18 * h / 8, h * 0.75, 0.12 * h / 8);
@@ -220,7 +269,7 @@ const tree = (b: Batch, x: number, z: number, h: number, kind: number) => {
   if (kind === 1) { for (let k = 0; k < 6; k++) { const a = (k / 6) * Math.PI * 2; b.add(new THREE.ConeGeometry(0.5, 3.4, 5).rotateZ(Math.PI / 2 - 0.5).rotateY(a).translate(x + 1.4 * Math.cos(a), h * 0.75, z - 1.4 * Math.sin(a)), lf); } }
   else { sph(b, lf, x, h * 0.78, z, h * 0.22, 0.85); sph(b, lf, x + h * 0.15, h * 0.68, z + 0.3, h * 0.17, 0.85); sph(b, lf, x - h * 0.14, h * 0.7, z - 0.2, h * 0.16, 0.85); }
 };
-const fern = (b: Batch, x: number, z: number, s: number) => { const lf = T("leaves", leafTex, 1, 1); for (let k = 0; k < 5; k++) { const a = (k / 5) * Math.PI * 2; b.add(new THREE.ConeGeometry(0.18 * s, 1.2 * s, 4).rotateZ(Math.PI / 2 - 0.9).rotateY(a).translate(x + 0.45 * s * Math.cos(a), 0.3 * s, z - 0.45 * s * Math.sin(a)), lf); } };
+const fern = (b: Batch, x: number, z: number, s: number) => { const lf = T("leaves", leafTex, 1, 1); for (let k = 0; k < 3; k++) sph(b, lf, x + (k - 1) * 0.35 * s, 0.25 * s, z + (k % 2) * 0.2 * s, 0.42 * s, 0.6); };
 const sandbags = (b: Batch, x: number, z: number, n: number, yaw = 0) => { for (let k = 0; k < n; k++) for (let row = 0; row < 3; row++) b.add(new THREE.SphereGeometry(0.32, 10, 6).scale(1.3, 0.55, 0.8).translate(-n * 0.38 + k * 0.76 + (row % 2) * 0.38, 0.17 + row * 0.3, 0), C("#a8956a"), M4(x, 0, z, yaw)); };
 const ruin = (b: Batch, x: number, z: number, w: number, h: number, seed: number) => {
   const r = rng(seed), m = T("ruinbrick", brickTex("#8a6a5a"), 2, 2);
@@ -258,18 +307,18 @@ const buildFront = (g: THREE.Group, b: Batch) => {
   box(b, T("mud", tx("mud", 256, 256, (q, r) => { q.fillStyle = "#5a4a38"; q.fillRect(0, 0, 256, 256); for (let i = 0; i < 400; i++) { q.fillStyle = `rgba(${40 + r() * 50},${30 + r() * 40},${20 + r() * 30},.6)`; q.beginPath(); q.ellipse(r() * 256, r() * 256, 4 + r() * 14, 2 + r() * 6, r() * 3, 0, 7); q.fill(); } }), 40, 40), -200, -0.1, -100, 200, 0, 200, 0);
   for (const [x, z, y] of [[-6, 10, 0.4], [4, 16, -0.3], [-14, 24, 0.2], [10, 30, 0.6], [-2, 40, 0]] as const) tank(b, x, z, Math.PI / 2 + y);
   for (let k = 0; k < 10; k++) ruin(b, -40 + k * 9, 70 + (k % 3) * 6, 6 + (k % 3) * 2, 8 + (k % 4) * 4, k);
-  for (let k = 0; k < 6; k++) sandbags(b, -20 + k * 7, 2 + (k % 2) * 3, 3, k * 0.4);
+  for (let k = 0; k < 6; k++) { const x = -20 + k * 7; if (Math.abs(x - 1) < 4) continue; sandbags(b, x, 2 + (k % 2) * 3, 3, k * 0.4); }
   for (let k = 0; k < 14; k++) { const r = rng(k + 3); b.add(new THREE.DodecahedronGeometry(0.3 + r() * 0.6, 0).translate(-30 + r() * 60, 0.1, r() * 60), C("#4a3e34")); }
   // fires glowing in the ruins
   for (const [x, z] of [[-18, 66], [6, 72], [22, 64], [-5, 50]] as const) glowSph(g, GLOW(5, 2.2, 0.6), x, 1.2, z, 1.4);
   // coast + sea far to the right, ships
   box(b, C("#2a4a6a"), 60, -0.05, -200, 400, 0.02, 400);
-  for (const [x, z] of [[120, 60], [150, 120], [100, 160]] as const) { box(b, C("#5a6470"), x - 12, 0, z - 2.5, x + 12, 4, z + 2.5); box(b, C("#5a6470"), x - 3, 4, z - 1.5, x + 4, 8, z + 1.5); cyl(b, C("#3a3e44"), x - 1, 8, z, 0.8, 4); }
+  warship(b, 120, 60, 0.4); warship(b, 175, 130, 0.2, 130, 13, "#5e6874"); warship(b, 95, 175, 0.6, 90, 9);
 };
 const buildJungle = (g: THREE.Group, b: Batch) => {
   box(b, T("jfloor", tx("jfloor", 256, 256, (q, r) => { q.fillStyle = "#3a4a24"; q.fillRect(0, 0, 256, 256); for (let i = 0; i < 300; i++) { q.fillStyle = ["#5a6a2a", "#2a3a1a", "#6a5a2a"][Math.floor(r() * 3)]; q.beginPath(); q.ellipse(r() * 256, r() * 256, 6 + r() * 10, 3 + r() * 4, r() * 3, 0, 7); q.fill(); } }), 20, 20), -60, -0.1, -60, 60, 0, 60);
   const r = rng(77);
-  for (let k = 0; k < 70; k++) { const x = (r() - 0.5) * 60, z = r() * 50 - 5; if (Math.abs(x) < 2 && z < 6) continue; tree(b, x, z, 7 + r() * 9, r() < 0.5 ? 1 : 0); }
+  for (let k = 0; k < 70; k++) { const x = (r() - 0.5) * 60, z = r() * 50 - 5; if (Math.abs(x) < 2 && z < 6) continue; tree(b, x, z, 7 + r() * 9, r() < 0.15 ? 1 : 0); }
   for (let k = 0; k < 90; k++) { const x = (r() - 0.5) * 30, z = r() * 25 - 3; if (Math.abs(x) < 1.2 && z < 3) continue; fern(b, x, z, 0.7 + r() * 0.9); }
   for (let k = 0; k < 10; k++) cyl(b, C("#3a5a24"), (r() - 0.5) * 16, 0, 4 + r() * 12, 0.04, 9);
   // god rays: soft warm shafts through the canopy
@@ -329,7 +378,7 @@ const buildPress = (g: THREE.Group, b: Batch, dyn: Record<string, THREE.Object3D
   table(b, 3.8, 2, 2.2, 1.0, 0.9);
   // growing piles of cash on the table and floor (scaled in y per frame)
   const pile = new THREE.Group();
-  for (let k = 0; k < 9; k++) { const pb = new Batch(); cashStack(pb, 0, 0, 0, 1, 0); const sub = new THREE.Group(); pb.build(sub); sub.position.set(-2.5 + (k % 3) * 0.45, 0, 0.3 + Math.floor(k / 3) * 0.3); pile.add(sub); }
+  for (let k = 0; k < 9; k++) { const pb = new Batch(); cashStack(pb, 0, 0, 0, 0.12, 0); const sub = new THREE.Group(); pb.build(sub); sub.position.set(-2.5 + (k % 3) * 0.45, 0, 0.3 + Math.floor(k / 3) * 0.3); pile.add(sub); }
   g.add(pile); dyn.cashPile = pile;
 };
 const buildBakery = (g: THREE.Group, b: Batch, dyn: Record<string, THREE.Object3D>) => {
@@ -344,8 +393,8 @@ const buildBakery = (g: THREE.Group, b: Batch, dyn: Record<string, THREE.Object3
   windowGlow(b, g, -4.8, 1.0, 4, 1.2, 2.0, true);
   // a big price tag on a stand on the counter (texture swapped per frame in world.ts)
   const tagM = new THREE.MeshBasicMaterial({ color: 0xffffff, fog: false });
-  const tag = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.45), tagM); tag.position.set(0.0, 1.62, 1.7); tag.rotation.y = Math.PI; tag.layers.set(NOINK); g.add(tag);
-  box(b, C("#3a2618"), -0.8, 1.05, 1.73, 0.8, 1.4, 1.76);
+  const tag = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.45), tagM); tag.position.set(-1.25, 1.62, 1.7); tag.rotation.y = Math.PI; tag.layers.set(NOINK); g.add(tag);
+  box(b, C("#3a2618"), -2.05, 1.05, 1.73, -0.45, 1.4, 1.76);
   dyn.priceTag = tag;
   // the customer's wheelbarrow full of cash, outside the counter
   const T0 = M4(-1.2, 0, -0.4, 0.5);
