@@ -29,13 +29,20 @@ const done = new Set(fs.readdirSync(path.join(outDir, "cards")).map((f) => f.rep
 // the drawing code's own hash is part of every card id, so editing toon.ts / cast.ts never reuses stale PNGs
 const SRCV = crypto.createHash("sha1").update(["toon.ts", "cast.ts", ...(PART ? [`ch/${PART}.ts`] : [])].map((f) => fs.readFileSync(new URL(`../src/videos/ww2/${f}`, import.meta.url))).join("|")).digest("hex").slice(0, 8);
 const hashOf = (key: string, w: number, h: number) => crypto.createHash("sha1").update(`${SRCV}|${w}x${h}|${key}`).digest("hex").slice(0, 16);
+// native canvas memory is invisible to V8's heuristics: collect garbage every few drawings or memory climbs to GBs
+const v8 = await import("node:v8"), vm = await import("node:vm");
+v8.setFlagsFromString("--expose-gc");
+const gc = vm.runInNewContext("gc") as () => void;
+let drawn = 0;
 const draw = (key: string, w: number, h: number, k: number, fn: (p: any) => void) => {
   const id = hashOf(key, w, h);
   if (!done.has(id)) {
+    if (++drawn % 12 === 0) gc();
     const c = createCanvas(w, h), g = c.getContext("2d") as any;
     g.setTransform(k, 0, 0, k, 0, 0);
     fn(new Pen(g));
     fs.writeFileSync(path.join(outDir, "cards", id + ".png"), c.toBuffer("image/png"));
+    c.width = 1; c.height = 1;                       // release the pixel buffer now
     done.add(id);
   }
   return id;
