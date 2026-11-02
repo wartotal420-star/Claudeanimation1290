@@ -44,6 +44,8 @@ for i, c in enumerate(TL["cards"]):
     for fr, v in ((c["a"] + 1, 0.0), (c["a"] + 11, 1.0), (c["b"] - 7, 1.0), (c["b"] + 1, 0.0)):
         st.blend_alpha = v; st.keyframe_insert("blend_alpha", frame=fr)
 strips.new_sound(name="mix", filepath=MIX, channel=1, frame_start=1)
+try: S.render.image_settings.media_type = "VIDEO"      # Blender 5.x; 4.5 has no media_type
+except Exception: pass
 S.render.image_settings.file_format = "FFMPEG"
 S.render.ffmpeg.format = "MPEG4"; S.render.ffmpeg.codec = "H264"; S.render.ffmpeg.constant_rate_factor = "HIGH"; S.render.ffmpeg.ffmpeg_preset = "GOOD"
 S.render.ffmpeg.audio_codec = "AAC"; S.render.ffmpeg.audio_bitrate = 320; S.render.ffmpeg.audio_channels = "STEREO"; S.render.ffmpeg.audio_mixrate = 48000
