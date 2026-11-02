@@ -31,3 +31,5 @@
 - Before pushing any script the user will run: compile-check it (python3 -m py_compile / tsc) and run it once here.
 - User's Mac: Blender 4.5 (EEVEE engine id is BLENDER_EEVEE_NEXT there); find Blender via ls /Applications/Blender*.app
   or mdfind; scripts must stay compatible with 4.5 (cloud preview uses bpy 5.2).
+- Mac speed test (bakery, 1080p): Cycles 64 spp 35 s/frame, EEVEE 15 s/frame (both incl. startup). Prefer Cycles
+  (user picked its look); use low spp + denoise + persistent data to get ~6-10 s/frame.
