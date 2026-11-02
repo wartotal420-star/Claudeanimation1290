@@ -4,6 +4,9 @@
   keep going with the work that was running. A new message is not a request to stop. Only stop when the user
   explicitly says to stop or cancel.
 - Keep answers short.
+- Work autonomously toward the finished video: make the best decision yourself and keep going. Don't ask the user
+  for choices or permission on things you can decide; only involve them for what only they can do (record voice,
+  render on their Mac, review).
 - Working Remotion setup and known fixes: see `setup/README.md`. Read it before setting up a project.
 
 # Lessons from the first video (Kiska) - apply to every new video
