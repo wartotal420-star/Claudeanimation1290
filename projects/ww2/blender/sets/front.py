@@ -335,58 +335,270 @@ def church(name, x, z, mat):
     for k in range(5): bx(f"{name}raft{k}", (x - 1.5 + k * 0.7, 25.5 + (k % 2), z - 1.0), (0.14, 3.0, 0.14), wood_mat("fbeam", "#2a1c14", "#100a08", 6, 0.9), 0.01, 0.3 * (k - 2))
     return o
 
-def warship(n, x, z, yaw, L, Bm):
-    """lofted hull (pointed bow, round stern, sheer), stepped superstructure, funnels, tripod mast, twin turrets"""
-    hm = mat_once("ship", lambda: worn("ship", "#6a7480", "#3a3e44", 0.5, 0.25, 0.4, 0.75, "#4a4e56"))
-    dk = mat_once("shipdk", lambda: lib.principled("shipdk", lib.hexc("#33373e"), 0.5, 0.3))
-    deck = mat_once("shipdeck", lambda: lib.wood("shipdeck", "#8a7a62", "#5a4a38", 1.2, 0.7))
-    boot = mat_once("shipboot", lambda: lib.principled("shipboot", lib.hexc("#5a2420"), 0.6))
+def _ss(a, b, x): return smooth(a, b, x) if a < b else 1.0 - smooth(b, a, x)
+def loft(name, rings, mat, cap0=True, cap1=True, uvs=None, smooth_=True):
+    """skin consecutive rings (equal point counts, three coords) into one mesh; optional per-vertex uvs"""
+    R = len(rings[0]); vs = [v for r in rings for v in r]; fs = []
+    for i in range(len(rings) - 1):
+        for k in range(R - 1): a = i * R + k; fs.append((a, a + R, a + R + 1, a + 1))
+    if cap0: fs.append(tuple(range(R))[::-1])
+    if cap1: fs.append(tuple(range((len(rings) - 1) * R, len(rings) * R)))
+    o = mesh_obj(name, vs, fs, mat, smooth=smooth_)
+    if uvs:
+        uv = o.data.uv_layers.new()
+        for p in o.data.polygons:
+            for li in p.loop_indices: uv.data[li].uv = uvs[o.data.loops[li].vertex_index]
+    return o
+def hull_mat(name, L):
+    """naval grey plating (UV = metres along hull, height): plate seams, two rows of portholes amidships, rust and
+    grime streaks running down, black boot-top at the waterline, red antifouling below"""
+    m = lib.principled(name, lib.hexc("#6c7682"), 0.55, 0.15); t, n, l = lib.nodes(m); b = n["Principled BSDF"]
+    tc = n.new("ShaderNodeTexCoord"); sep = n.new("ShaderNodeSeparateXYZ"); l.new(tc.outputs["UV"], sep.inputs[0])
+    br = n.new("ShaderNodeTexBrick"); br.inputs["Scale"].default_value = 1.0; br.inputs["Brick Width"].default_value = 7.0; br.inputs["Row Height"].default_value = 1.3
+    br.inputs["Mortar Size"].default_value = 0.035; br.inputs["Color1"].default_value = (*lib.hexc("#6c7682"), 1); br.inputs["Color2"].default_value = (*lib.hexc("#646e7a"), 1)
+    br.inputs["Mortar"].default_value = (*lib.hexc("#4a525c"), 1); l.new(tc.outputs["UV"], br.inputs["Vector"])
+    # grime streaks: noise stretched vertically, stronger just under the deck edge and under the portholes
+    mp = n.new("ShaderNodeMapping"); mp.inputs["Scale"].default_value = (1.4, 0.07, 1.0); l.new(tc.outputs["UV"], mp.inputs["Vector"])
+    nz = n.new("ShaderNodeTexNoise"); nz.inputs["Scale"].default_value = 1.0; nz.inputs["Detail"].default_value = 8; l.new(mp.outputs[0], nz.inputs["Vector"])
+    st = lib.ramp(n, l, nz.outputs["Fac"], [(0.45, (0, 0, 0)), (0.75, (1, 1, 1))])
+    sm = n.new("ShaderNodeMix"); sm.data_type = "RGBA"; l.new(st.outputs["Color"], sm.inputs[0]); l.new(br.outputs["Color"], sm.inputs[6]); sm.inputs[7].default_value = (*lib.hexc("#3e3a36"), 1)
+    nr = n.new("ShaderNodeTexNoise"); nr.inputs["Scale"].default_value = 2.5; nr.inputs["Detail"].default_value = 6; l.new(mp.outputs[0], nr.inputs["Vector"])
+    rs = lib.ramp(n, l, nr.outputs["Fac"], [(0.6, (0, 0, 0)), (0.72, (1, 1, 1))], (-200, 200))
+    rm = n.new("ShaderNodeMix"); rm.data_type = "RGBA"; l.new(rs.outputs["Color"], rm.inputs[0]); l.new(sm.outputs[2], rm.inputs[6]); rm.inputs[7].default_value = (*lib.hexc("#6a4632"), 1)
+    # portholes: two rows (y 1.7 and 2.8) every 1.8 m between -0.33 L and 0.36 L
+    holes = []
+    for row in (1.7, 2.8):
+        fu = n.new("ShaderNodeMath"); fu.operation = "WRAP"; fu.inputs[1].default_value = 0.9; fu.inputs[2].default_value = -0.9; l.new(sep.outputs["X"], fu.inputs[0])
+        dy = n.new("ShaderNodeMath"); dy.operation = "SUBTRACT"; dy.inputs[1].default_value = row; l.new(sep.outputs["Y"], dy.inputs[0])
+        cmb = n.new("ShaderNodeCombineXYZ"); l.new(fu.outputs[0], cmb.inputs[0]); l.new(dy.outputs[0], cmb.inputs[1])
+        ln = n.new("ShaderNodeVectorMath"); ln.operation = "LENGTH"; l.new(cmb.outputs[0], ln.inputs[0])
+        lt = n.new("ShaderNodeMath"); lt.operation = "LESS_THAN"; lt.inputs[1].default_value = 0.2; l.new(ln.outputs["Value"], lt.inputs[0]); holes.append(lt)
+    hh = n.new("ShaderNodeMath"); hh.operation = "MAXIMUM"; l.new(holes[0].outputs[0], hh.inputs[0]); l.new(holes[1].outputs[0], hh.inputs[1])
+    mid = n.new("ShaderNodeMapRange"); mid.inputs["From Min"].default_value = -0.33 * L; mid.inputs["From Max"].default_value = -0.33 * L + 0.01; l.new(sep.outputs["X"], mid.inputs["Value"])
+    mid2 = n.new("ShaderNodeMapRange"); mid2.inputs["From Min"].default_value = 0.36 * L; mid2.inputs["From Max"].default_value = 0.36 * L - 0.01; l.new(sep.outputs["X"], mid2.inputs["Value"])
+    mk = n.new("ShaderNodeMath"); mk.operation = "MULTIPLY"; l.new(mid.outputs["Result"], mk.inputs[0]); l.new(mid2.outputs["Result"], mk.inputs[1])
+    ph = n.new("ShaderNodeMath"); ph.operation = "MULTIPLY"; l.new(hh.outputs[0], ph.inputs[0]); l.new(mk.outputs[0], ph.inputs[1])
+    pm = n.new("ShaderNodeMix"); pm.data_type = "RGBA"; l.new(ph.outputs[0], pm.inputs[0]); l.new(rm.outputs[2], pm.inputs[6]); pm.inputs[7].default_value = (0.015, 0.015, 0.02, 1)
+    # boot-top (black, y -0.5..0.6) and antifouling red below
+    bt = n.new("ShaderNodeValToRGB"); mr = n.new("ShaderNodeMapRange"); mr.inputs["From Min"].default_value = -4.0; mr.inputs["From Max"].default_value = 2.0; l.new(sep.outputs["Y"], mr.inputs["Value"])
+    l.new(mr.outputs["Result"], bt.inputs["Fac"]); e = bt.color_ramp.elements; bt.color_ramp.interpolation = "CONSTANT"
+    e[0].position, e[0].color = 0.0, (*lib.hexc("#7a2a22"), 0.0)
+    el = e.new((-0.5 + 4) / 6); el.color = (0.03, 0.03, 0.035, 0.0)
+    e[-1].position, e[-1].color = (0.6 + 4) / 6, (1, 1, 1, 1)
+    bm_ = n.new("ShaderNodeMix"); bm_.data_type = "RGBA"; l.new(bt.outputs["Alpha"], bm_.inputs[0]); l.new(bt.outputs["Color"], bm_.inputs[6]); l.new(pm.outputs[2], bm_.inputs[7])
+    l.new(bm_.outputs[2], b.inputs["Base Color"])
+    bb = n.new("ShaderNodeMath"); bb.operation = "MULTIPLY_ADD"; bb.inputs[1].default_value = 0.3; l.new(br.outputs["Fac"], bb.inputs[0]); l.new(ph.outputs[0], bb.inputs[2])
+    lib.bump(n, l, bb.outputs[0], 0.5, 0.05)
+    return m
+def deck_mat():
+    m = lib.principled("shipteak", lib.hexc("#8a7458"), 0.75); t, n, l = lib.nodes(m)
+    tc = n.new("ShaderNodeTexCoord"); br = n.new("ShaderNodeTexBrick"); br.inputs["Scale"].default_value = 1.0; br.inputs["Brick Width"].default_value = 6.0; br.inputs["Row Height"].default_value = 0.16
+    br.inputs["Mortar Size"].default_value = 0.012; br.inputs["Color1"].default_value = (*lib.hexc("#8a7458"), 1); br.inputs["Color2"].default_value = (*lib.hexc("#7a6448"), 1); br.inputs["Mortar"].default_value = (*lib.hexc("#2a2420"), 1)
+    l.new(tc.outputs["UV"], br.inputs["Vector"]); l.new(br.outputs["Color"], n["Principled BSDF"].inputs["Base Color"]); return m
+def ensign_mat():
+    """white ensign: red cross on white, dark blue canton (UV)"""
+    m = lib.principled("ensign", (1, 1, 1), 0.8); t, n, l = lib.nodes(m)
+    tc = n.new("ShaderNodeTexCoord"); sp = n.new("ShaderNodeSeparateXYZ"); l.new(tc.outputs["UV"], sp.inputs[0])
+    def band(out, c, w):
+        d = n.new("ShaderNodeMath"); d.operation = "SUBTRACT"; d.inputs[1].default_value = c; l.new(out, d.inputs[0])
+        a = n.new("ShaderNodeMath"); a.operation = "ABSOLUTE"; l.new(d.outputs[0], a.inputs[0])
+        lt = n.new("ShaderNodeMath"); lt.operation = "LESS_THAN"; lt.inputs[1].default_value = w; l.new(a.outputs[0], lt.inputs[0]); return lt
+    cx, cyy = band(sp.outputs["X"], 0.5, 0.06), band(sp.outputs["Y"], 0.5, 0.09)
+    cr = n.new("ShaderNodeMath"); cr.operation = "MAXIMUM"; l.new(cx.outputs[0], cr.inputs[0]); l.new(cyy.outputs[0], cr.inputs[1])
+    kx = n.new("ShaderNodeMath"); kx.operation = "LESS_THAN"; kx.inputs[1].default_value = 0.42; l.new(sp.outputs["X"], kx.inputs[0])
+    ky = n.new("ShaderNodeMath"); ky.operation = "GREATER_THAN"; ky.inputs[1].default_value = 0.5; l.new(sp.outputs["Y"], ky.inputs[0])
+    kn = n.new("ShaderNodeMath"); kn.operation = "MULTIPLY"; l.new(kx.outputs[0], kn.inputs[0]); l.new(ky.outputs[0], kn.inputs[1])
+    m1 = n.new("ShaderNodeMix"); m1.data_type = "RGBA"; l.new(cr.outputs[0], m1.inputs[0]); m1.inputs[6].default_value = (0.9, 0.88, 0.84, 1); m1.inputs[7].default_value = (0.7, 0.04, 0.04, 1)
+    m2 = n.new("ShaderNodeMix"); m2.data_type = "RGBA"; l.new(kn.outputs[0], m2.inputs[0]); l.new(m1.outputs[2], m2.inputs[6]); m2.inputs[7].default_value = (0.03, 0.05, 0.22, 1)
+    l.new(m2.outputs[2], n["Principled BSDF"].inputs["Base Color"]); return m
+def flag(name, root, w, h, dirv, mat, wave=0.12):
+    """a waving flag hung from root (three point) streaming along dirv (three xz unit vector)"""
+    NX, NY = 8, 4; vs, uvs = [], []
+    for j in range(NY + 1):
+        for i in range(NX + 1):
+            u, v = i / NX, j / NY
+            vs.append((root[0] + dirv[0] * w * u - dirv[1] * wave * w * math.sin(u * 5 + v) * u, root[1] - h * v - 0.15 * h * u * u,
+                       root[2] + dirv[1] * w * u + dirv[0] * wave * w * math.sin(u * 5 + v) * u)); uvs.append((u, 1 - v))
+    rings = [vs[j * (NX + 1):(j + 1) * (NX + 1)] for j in range(NY + 1)]
+    return loft(name, rings, mat, False, False, uvs, smooth_=True)
+
+def warship(n, x, z, yaw, L, Bm, kind="cruiser", train=0.35):
+    """WW2 capital ship. Ship-local frame: bow +x, starboard +z, waterline y 0 (sea surface at y -0.25)."""
     c, s = math.cos(yaw), math.sin(yaw)
     P = lambda lx, ly, lz: (x + lx * c + lz * s, ly, z - lx * s + lz * c)
-    secs = 18; rings = []
-    for i in range(secs + 1):
-        t = i / secs; lx = (t - 0.5) * L
-        w = Bm / 2 * min(1.0, (t / 0.07) ** 0.5) * (1 - max(0.0, (t - 0.6) / 0.4) ** 1.7)
-        top = 4.2 + 2.5 * max(0.0, (t - 0.7) / 0.3) ** 2 + 0.6 * max(0.0, (0.15 - t) / 0.15)
-        rings.append([P(lx, top, -w), P(lx, 0.3, -w * 0.98), P(lx, -1.8, -w * 0.7), P(lx, -2.8, 0), P(lx, -1.8, w * 0.7), P(lx, 0.3, w * 0.98), P(lx, top, w)])
-    vs = [v for r in rings for v in r]; fs = []
-    for i in range(secs):
-        for k in range(6): a = i * 7 + k; fs.append((a, a + 7, a + 8, a + 1))
-    fs.append(tuple(range(7))[::-1]); fs.append(tuple(range(secs * 7, secs * 7 + 7)))
-    hull = mesh_obj(f"{n}hull", vs, fs, hm, smooth=False)
-    dv = [r[0] for r in rings] + [r[6] for r in rings[::-1]]
-    mesh_obj(f"{n}deck", [(v[0], v[1] + 0.02, v[2]) for v in dv], [tuple(range(len(dv)))], deck)
-    # boot topping (red waterline band) as a thin lofted strip
-    bv = [v for r in rings for v in (r[1], (r[1][0], -0.05, r[1][2]))] + [v for r in rings for v in (r[5], (r[5][0], -0.05, r[5][2]))]
-    bfs = [(i * 2, i * 2 + 2, i * 2 + 3, i * 2 + 1) for i in range(secs)]; off = (secs + 1) * 2
-    bfs += [(off + i * 2, off + i * 2 + 1, off + i * 2 + 3, off + i * 2 + 2) for i in range(secs)]
-    mesh_obj(f"{n}boot", [(v[0] * 1.0, v[1], v[2]) for v in bv], bfs, boot)
-    def B(nm, lc, sz, m, bev=0.25): bx(f"{n}{nm}", P(*lc), sz, m, bev, yaw)
-    B("sup1", (-L * 0.02, 5.8, 0), (L * 0.28, 3.2, Bm * 0.6), hm); B("sup2", (L * 0.07, 8.6, 0), (L * 0.13, 2.6, Bm * 0.48), hm)
-    B("sup3", (L * 0.1, 10.8, 0), (L * 0.07, 1.8, Bm * 0.36), hm); B("bridgew", (L * 0.135, 11.0, 0), (0.2, 0.6, Bm * 0.34), dk, 0.02)
-    for k in range(6): B(f"port{k}", (-L * 0.14 + k * L * 0.05, 5.6, Bm * 0.3), (0.6, 0.5, 0.1), dk, 0.05)
-    for k, fx in enumerate((-0.05, -0.15)):
-        lathe(f"{n}fun{k}", [(0.0, 6.0), (1.6, 6.0), (1.6, 13.5), (1.75, 13.8), (1.4, 14.0), (0.0, 14.0)], P(L * fx, 0, 0), hm, 24, yaw=yaw, sx=1.6, sz=1.0)
-        lathe(f"{n}funt{k}", [(0.0, 13.6), (1.42, 13.6), (1.42, 14.1), (0.0, 14.1)], P(L * fx, 0, 0), dk, 24, yaw=yaw, sx=1.6, sz=1.0)
-        smoke_column(f"{n}smk{k}", P(L * fx, 15, 0), 14, 1.4, 6.0, mat_once("fshipsmoke", lambda: smoke_mat("fshipsmoke", "#3a3434", 0.55)), drift=(-22 * c, 22 * s), seed=k + int(x), puffs=8)
-    for k, (mx_, hh) in enumerate(((0.12, 22), (-0.25, 16))):
-        top_ = P(L * mx_, hh, 0)
-        for sd in (-1, 0, 1): tube(f"{n}mast{k}{sd}", [P(L * mx_ - (2 if sd == 0 else 0), 6, sd * 1.6), top_], 0.18, dk, res=2, bres=1)
-        B(f"yard{k}", (L * mx_, hh - 2, 0), (0.3, 0.3, Bm * 0.5), dk, 0.05); cy(f"{n}top{k}", P(L * mx_, hh - 3.5, 0), 1.0, 1.4, hm, 16)
-        tube(f"{n}stay{k}", [top_, P(L * (0.5 if k == 0 else -0.5), 5, 0)], 0.04, dk, res=2, bres=0)
-    for tx_, d in ((0.33, 1), (0.22, 1), (-0.3, -1), (-0.4, -1)):
-        hgt = 4.6 + (1.5 if abs(tx_) < 0.25 else 0)
-        lathe(f"{n}bar{tx_}", [(0.0, hgt - 0.6), (2.6, hgt - 0.6), (2.6, hgt), (0.0, hgt)], P(L * tx_, 0, 0), hm, 24)
-        B(f"gh{tx_}", (L * tx_ + d * 0.4, hgt + 1.0, 0), (4.6, 2.0, 4.0), hm, 0.4)
-        for sd in (-0.7, 0.7): tube(f"{n}brl{tx_}{sd}", [P(L * tx_ + d * 2.5, hgt + 1.0, sd), P(L * tx_ + d * 11.0, hgt + 1.5, sd)], 0.3, dk, res=2, bres=1)
+    grey = mat_once("shipgrey", lambda: worn("shipgrey", "#7a8590", "#4a525a", 0.55, 0.2, 0.5, 0.68, "#565e66"))
+    grey2 = mat_once("shipgrey2", lambda: worn("shipgrey2", "#68727e", "#3e444c", 0.55, 0.2, 0.5, 0.7, "#4a5058"))
+    dk = mat_once("shipdk", lambda: lib.principled("shipdk", lib.hexc("#2c3036"), 0.5, 0.3))
+    black = mat_once("shipblack", lambda: lib.principled("shipblack", lib.hexc("#121214"), 0.6))
+    canvas = mat_once("shipcanvas", lambda: lib.cloth("shipcanvas", "#b8b098"))
+    win = mat_once("shipwin", lambda: lib.principled("shipwin", lib.hexc("#0c0e12"), 0.1, 0.0))
+    lit = mat_once("shiplit", lambda: lib.emit("shiplit", (1.0, 0.55, 0.2), 0.8))
+    # ---------- hull: lofted cross-sections; flared raked bow, sheer rising forward, curved bilge, narrower stern ----------
+    US = [0.0, 0.06, 0.14, 0.24, 0.36, 0.5, 0.64, 0.78, 0.9, 1.0]; NS = 44
+    rings, uvs, edge = [], [], []
+    for i in range(NS + 1):
+        t = i / NS; lx0 = (t - 0.5) * L
+        w = Bm / 2 * (0.42 + 0.58 * smooth(0.0, 0.25, t)) * max(0.0, 1 - (max(0.0, t - 0.58) / 0.42) ** 1.7)
+        w = max(w, 0.08)
+        top = 4.0 + 3.6 * smooth(0.55, 1.0, t) ** 1.4 + 0.5 * smooth(0.15, 0.0, t)
+        keel = -3.6 + 3.2 * smooth(0.86, 1.0, t) + 2.6 * smooth(0.1, 0.0, t)
+        flare = smooth(0.5, 0.95, t) * min(1.0, (1 - t) * 14)
+        side = []
+        for u in US:
+            y = keel + (top - keel) * u
+            g = math.sin(min(1.0, u / 0.34) * math.pi / 2) ** 0.55
+            hw = w * g + Bm * 0.08 * flare * max(0.0, (u - 0.5) / 0.5) ** 1.6
+            rake = 0.07 * L * smooth(0.86, 1.0, t) * u ** 1.3 - 0.02 * L * smooth(0.06, 0.0, t) * (1 - u)
+            side.append((lx0 + rake, y, hw))
+        ring = [P(a, y, -hw) for a, y, hw in side[::-1]] + [P(a, y, hw) for a, y, hw in side[1:]]
+        rings.append(ring); uvs += [(a, y) for a, y, hw in side[::-1]] + [(a, y) for a, y, hw in side[1:]]
+        edge.append(side[-1])
+    hull = loft(f"{n}hull", rings, mat_once(f"hull{L}", lambda: hull_mat(f"hull{L}", L)), True, True, uvs)
+    # deck (teak planks) and a rubbing strake / deck-edge gutter
+    dv = [P(a, y + 0.02, -hw * 0.995) for a, y, hw in edge] + [P(a, y + 0.02, hw * 0.995) for a, y, hw in edge[::-1]]
+    duv = [(a, -hw) for a, y, hw in edge] + [(a, hw) for a, y, hw in edge[::-1]]
+    d = mesh_obj(f"{n}deck", dv, [tuple(range(len(dv)))], mat_once("shipteak", deck_mat)); uv = d.data.uv_layers.new()
+    for p in d.data.polygons:
+        for li in p.loop_indices: uv.data[li].uv = duv[d.data.loops[li].vertex_index]
+    for sd in (-1, 1):
+        tube(f"{n}strake{sd}", [P(a, y - 0.15, sd * (hw + 0.06)) for a, y, hw in edge[1:-1:3]], 0.1, dk, res=3, bres=1)
+        tube(f"{n}rail{sd}", [P(a, y + 1.0, sd * hw * 0.98) for a, y, hw in edge[2:-2:3]], 0.04, dk, res=3, bres=0)
+    def deck_y(lx):
+        t = min(1.0, max(0.0, lx / L + 0.5)); return 4.0 + 3.6 * smooth(0.55, 1.0, t) ** 1.4 + 0.5 * smooth(0.15, 0.0, t)
+    def B(nm, lx, ly, lz, sx, sy, sz, m, bev=0.3): bx(f"{n}{nm}", P(lx, ly, lz), (sx, sy, sz), m, bev, yaw)
+    # anchors and hawse pipes at the bow
+    for sd in (-1, 1):
+        ax = 0.4 * L; hwb = Bm / 2 * max(0.08, 1 - ((0.9 - 0.58) / 0.42) ** 1.7)
+        lathe(f"{n}hawse{sd}", [(0.0, 0.0), (0.55, 0.0), (0.55, 0.3), (0.0, 0.3)], P(ax, deck_y(ax) - 1.6, sd * (hwb + 0.15)), black, 12, tilt=Matrix.Rotation(math.pi / 2, 3, "X"))
+        B(f"anchor{sd}", ax - 0.3, deck_y(ax) - 2.6, sd * (hwb + 0.3), 0.5, 1.6, 0.3, black, 0.08)
+    # ---------- layout per class ----------
+    if kind == "battleship":
+        turrets = [(0.31, 1, 3, 0.0), (0.21, 1, 3, 1.8), (-0.27, -1, 3, 1.8), (-0.37, -1, 3, 0.0)]; funnels = [(-0.02, 2.6, 15.0)]; tsize = 1.25
+    elif kind == "destroyer":
+        turrets = [(0.3, 1, 2, 0.0), (0.21, 1, 2, 1.4), (-0.33, -1, 2, 0.0)]; funnels = [(0.0, 1.3, 9.5), (-0.1, 1.3, 9.5)]; tsize = 0.75
+    else:
+        turrets = [(0.3, 1, 2, 0.0), (0.2, 1, 2, 1.6), (-0.33, -1, 2, 0.0)]; funnels = [(0.02, 1.7, 12.0), (-0.1, 1.7, 12.0)]; tsize = 1.0
+    sc = tsize
+    # ---------- superstructure: deckhouse, bridge tiers with windows, director tower, platforms ----------
+    y0 = deck_y(0.0)
+    B("house1", -0.06 * L, y0 + 1.4, 0, 0.36 * L, 2.8, Bm * 0.58, grey, 0.35)
+    B("house2", 0.06 * L, y0 + 4.0, 0, 0.14 * L, 2.6, Bm * 0.5, grey, 0.3)
+    B("bridge1", 0.1 * L, y0 + 6.4, 0, 0.075 * L, 2.3, Bm * 0.44, grey, 0.25)
+    B("bridgewg", 0.115 * L, y0 + 7.4, 0, 0.03 * L, 0.25, Bm * 0.78, grey2, 0.05)
+    B("bridge2", 0.105 * L, y0 + 8.6, 0, 0.055 * L, 2.0, Bm * 0.34, grey, 0.25)
+    B("compass", 0.11 * L, y0 + 10.0, 0, 0.04 * L, 0.8, Bm * 0.3, grey2, 0.15)
+    for tier, (lx, yy, wd) in enumerate(((0.1 * L + 0.0375 * L, y0 + 6.7, Bm * 0.44), (0.105 * L + 0.0275 * L, y0 + 8.9, Bm * 0.34))):
+        B(f"wband{tier}", lx, yy, 0, 0.12, 0.55, wd * 0.9, win, 0.02)
+        for sd in (-1, 1): B(f"wside{tier}{sd}", lx - 0.03 * L, yy, sd * wd / 2, 0.04 * L, 0.5, 0.1, win, 0.02)
+        for k in range(5): B(f"wbar{tier}{k}", lx + 0.02, yy, (k - 2) * wd * 0.2, 0.1, 0.6, 0.12, grey2, 0.0)
+    for k, (lx, yy, lz) in enumerate(((-0.12 * L, y0 + 1.6, Bm * 0.29), (-0.03 * L, y0 + 1.6, Bm * 0.29), (0.05 * L, y0 + 4.2, Bm * 0.25), (-0.18 * L, y0 + 1.4, -Bm * 0.29), (0.02 * L, y0 + 1.6, -Bm * 0.29))):
+        B(f"lit{k}", lx, yy, lz + (0.06 if lz > 0 else -0.06), 0.5, 0.45, 0.05, lit, 0.0)
+    # director tower with rangefinder arms on top of the bridge
+    dx = 0.1 * L; dy = y0 + 10.4
+    lathe(f"{n}dir", [(0.0, 0.0), (1.5 * sc, 0.0), (1.5 * sc, 1.8 * sc), (1.1 * sc, 2.4 * sc), (0.0, 2.5 * sc)], P(dx, dy, 0), grey, 8, yaw=yaw + 0.3)
+    B("rf", dx - 0.2, dy + 1.4 * sc, 0, 0.6, 0.5, 5.5 * sc, grey2, 0.1)
+    for sd in (-1, 1): cy(f"{n}rfe{sd}", P(dx - 0.2, dy + 1.4 * sc, sd * 2.75 * sc), 0.35, 0.6, grey2, 12, rot=(math.radians(90), 0, yaw))
+    # tripod foremast with spotting top, yardarm, topmast; pole mainmast aft
+    fx = 0.07 * L; mtop = P(fx, y0 + 22 * sc + 6, 0)
+    for k, (ox, oz) in enumerate(((-4.5, -2.4), (-4.5, 2.4), (1.0, 0.0))):
+        tube(f"{n}leg{k}", [P(fx + ox, y0 + 2.8, oz), mtop], 0.32, grey2, res=2, bres=1)
+    lathe(f"{n}spot", [(0.0, 0.0), (1.8, 0.0), (1.9, 1.5), (1.4, 2.2), (0.0, 2.2)], (mtop[0], mtop[1] - 2.5, mtop[2]), grey, 12)
+    tube(f"{n}topm", [mtop, (mtop[0], mtop[1] + 8, mtop[2])], 0.13, dk, res=2, bres=0)
+    yard = [P(fx, mtop[1] + 2.5, -Bm * 0.4), P(fx, mtop[1] + 2.5, Bm * 0.4)]; tube(f"{n}yard", yard, 0.1, dk, res=2, bres=0)
+    mx = -0.2 * L; mmt = P(mx, y0 + 18 * sc + 2, 0)
+    tube(f"{n}mainm", [P(mx, y0 + 2.8, 0), mmt], 0.28, grey2, res=2, bres=1)
+    yard2 = [P(mx, mmt[1] - 3, -Bm * 0.3), P(mx, mmt[1] - 3, Bm * 0.3)]; tube(f"{n}yard2", yard2, 0.09, dk, res=2, bres=0)
+    # rigging: forestay to the jackstaff, backstay, wireless aerials between the masts, signal halyards with flags
+    jack = P(0.5 * L + 0.07 * L, deck_y(0.5 * L) + 3.5, 0); staff = P(-0.5 * L - 0.01 * L, deck_y(-0.5 * L) + 5, 0)
+    tube(f"{n}jackst", [P(0.5 * L + 0.065 * L, deck_y(0.5 * L), 0), jack], 0.08, dk, res=2, bres=0)
+    tube(f"{n}ensst", [P(-0.5 * L - 0.01 * L, deck_y(-0.5 * L), 0), staff], 0.09, dk, res=2, bres=0)
+    rig = mat_once("shiprig", lambda: lib.principled("shiprig", lib.hexc("#1a1c20"), 0.6, 0.5))
+    for a_, b_ in ((mtop, jack), ((mtop[0], mtop[1] + 7, mtop[2]), mmt), (mmt, staff), (yard[0], (mmt[0], mmt[1] + 0, mmt[2])), (yard[1], mmt)):
+        tube(f"{n}rig{len(bpy.data.objects)}", [a_, ((a_[0] + b_[0]) / 2, (a_[1] + b_[1]) / 2 - 0.6, (a_[2] + b_[2]) / 2), b_], 0.05, rig, res=4, bres=0)
+    cols = ["#c8202a", "#e8d040", "#1a3a8a", "#f0ece0", "#c8202a", "#1a3a8a"]
+    for sd in (0, 1):
+        p0 = Vector(yard[sd]); p1 = Vector(P(0.5 * L - 4, deck_y(0.45 * L) + 0.5, (sd * 2 - 1) * 1.5))
+        tube(f"{n}hal{sd}", [tuple(p0), tuple(p1)], 0.035, rig, res=2, bres=0)
+        for k in range(5):
+            q = p0.lerp(p1, 0.12 + k * 0.17)
+            flag(f"{n}sig{sd}{k}", tuple(q), 1.4, 1.0, (c, -s), pmat("sigf" + cols[(k + sd) % 6], cols[(k + sd) % 6], 0.8), 0.08)
+    flag(f"{n}ensign", staff, 5.0, 2.6, (-c, s), mat_once("ensign", ensign_mat), 0.15)
+    flag(f"{n}jack", jack, 1.8, 1.1, (-c, s), pmat("jackf", "#1a2a6a", 0.8), 0.1)
+    # ---------- funnels with caps, steam pipes, searchlight platforms, smoke ----------
+    smm = mat_once("fshipsmoke", lambda: smoke_mat("fshipsmoke", "#3a3434", 0.5))
+    for k, (fxp, r, hgt) in enumerate(funnels):
+        fl = fxp * L; tilt = Matrix.Rotation(0.09, 3, "Z")
+        lathe(f"{n}fun{k}", [(0.0, y0 + 2.0), (r, y0 + 2.0), (r, y0 + hgt), (r * 1.06, y0 + hgt + 0.3), (r * 0.96, y0 + hgt + 0.5), (0.0, y0 + hgt + 0.5)], P(fl, 0, 0), grey, 28, yaw=yaw, sx=1.55, tilt=tilt)
+        lathe(f"{n}cap{k}", [(r * 0.95, y0 + hgt - 0.9), (r * 1.04, y0 + hgt - 0.9), (r * 1.04, y0 + hgt + 0.55), (r * 0.9, y0 + hgt + 0.55), (r * 0.9, y0 + hgt - 0.4)], P(fl, 0, 0), black, 28, yaw=yaw, sx=1.55, tilt=tilt, cap=False)
+        lathe(f"{n}grill{k}", [(0.0, y0 + hgt + 0.2), (r * 0.9, y0 + hgt + 0.2)], P(fl, 0, 0), dk, 28, yaw=yaw, sx=1.55, tilt=tilt, cap=False)
+        for sd in (-1, 1): tube(f"{n}pipe{k}{sd}", [P(fl - r * 0.6, y0 + 3, sd * r * 1.05), P(fl - r * 0.6 - 0.8, y0 + hgt + 1.0, sd * r * 1.0)], 0.18, grey2, res=2, bres=0)
+        lathe(f"{n}slp{k}", [(0.0, 0.0), (r * 1.9, 0.0), (r * 1.9, 0.25), (0.0, 0.25)], P(fl, y0 + hgt * 0.62, 0), grey2, 16, sx=1.0)
+        for sd in (-1, 1): lathe(f"{n}sl{k}{sd}", [(0.0, 0.0), (0.45, 0.05), (0.5, 0.6), (0.0, 0.7)], P(fl + 0.4, y0 + hgt * 0.62 + 0.25, sd * r * 1.4), grey2, 12)
+        top = P(fl - 0.09 * hgt, y0 + hgt + 1.2, 0)
+        smoke_column(f"{n}smk{k}", top, 12, 1.0, 4.5, smm, drift=(-26 * c, 26 * s), seed=k + int(x), puffs=10)
+    # ---------- main turrets: barbette, sloped gunhouse with rounded face, 2-3 barrels with canvas blast bags ----------
+    def gunhouse(nm, lx, base, d, nb, train_, scl, elev=0.08):
+        ang = (0 if d > 0 else math.pi) + train_
+        ca, sa = math.cos(ang), math.sin(ang)
+        Q = lambda fx_, fy, fz: P(lx + fx_ * ca + fz * sa, fy, -fx_ * sa + fz * ca)
+        lathe(f"{n}{nm}bb", [(0.0, base - 2.0), (3.0 * scl, base - 2.0), (3.0 * scl, base + 0.3), (0.0, base + 0.3)], P(lx, 0, 0), grey2, 28)
+        hl, hw, hh = 4.2 * scl, 2.7 * scl, 2.2 * scl
+        def ring(y, k, back):
+            pts = [(-hl * back, -hw * k), (hl * 0.55, -hw * k), (hl * 0.85 - (1 - k) * hl, -hw * 0.75 * k), (hl - (1 - k) * hl * 1.2, -hw * 0.35 * k), (hl - (1 - k) * hl * 1.2, hw * 0.35 * k),
+                   (hl * 0.85 - (1 - k) * hl, hw * 0.75 * k), (hl * 0.55, hw * k), (-hl * back, hw * k)]
+            return [Q(a, y, b) for a, b in pts]
+        rs = [ring(base + 0.3, 1.0, 1.0), ring(base + 0.3 + hh * 0.7, 0.97, 1.0), ring(base + 0.3 + hh, 0.86, 0.97)]
+        loft(f"{n}{nm}gh", [r + [r[0]] for r in rs], grey, True, True, smooth_=False)
+        for sd in (-1, 1): bx(f"{n}{nm}hood{sd}", Q(-hl * 0.55, base + 0.3 + hh * 0.75, sd * (hw + 0.3)), (1.4 * scl, 0.6 * scl, 0.7 * scl), grey2, 0.1, yaw + ang)
+        lathe(f"{n}{nm}cup", [(0.0, 0.0), (0.55 * scl, 0.0), (0.55 * scl, 0.45 * scl), (0.0, 0.55 * scl)], Q(-hl * 0.3, base + 0.3 + hh, hw * 0.4), grey2, 12)
+        for k in range(nb):
+            oz = (k - (nb - 1) / 2) * 1.2 * scl; root = Vector(Q(hl * 0.88, base + 0.3 + hh * 0.5, oz))
+            dirv = Vector(Q(hl * 0.88 + math.cos(elev), base + 0.3 + hh * 0.5 + math.sin(elev), oz)) - root
+            Lb = 13.0 * scl; tip = root + dirv * Lb
+            tube(f"{n}{nm}brl{k}", [tuple(root), tuple(root + dirv * Lb * 0.5), tuple(tip)], 0.3 * scl, dk, res=2, bres=2, taper=lambda f: 1.0 - 0.4 * f)
+            lathe(f"{n}{nm}mz{k}", [(0.0, 0.0), (0.24 * scl, 0.0), (0.24 * scl, 0.5 * scl), (0.0, 0.5 * scl)], tuple(tip - dirv * 0.4 * scl), dk, 12,
+                  tilt=Matrix.Rotation(-math.pi / 2 + elev, 3, "Z"), yaw=yaw + ang)
+            lathe(f"{n}{nm}bag{k}", [(0.0, 0.0), (0.45 * scl, 0.0), (0.58 * scl, 0.4 * scl), (0.5 * scl, 1.1 * scl), (0.34 * scl, 1.4 * scl), (0.0, 1.4 * scl)], tuple(root - dirv * 0.3), canvas, 14,
+                  tilt=Matrix.Rotation(-math.pi / 2 + elev, 3, "Z"), yaw=yaw + ang)
+    for k, (tx_, d_, nb, raise_) in enumerate(turrets):
+        lx = tx_ * L; base = deck_y(lx) + raise_
+        gunhouse(f"T{k}", lx, base, d_, nb, (train if d_ > 0 else -train) * (1 if k % 2 == 0 else 0.8), sc)
+    # ---------- secondary casemate guns, AA tubs, lifeboats on davits ----------
     for k in range(4):
-        for sd in (-1, 1): lathe(f"{n}boat{k}{sd}", [(0.0, 0.0), (0.5, 0.1), (0.6, 0.6), (0.0, 0.6)], P(-L * 0.06 + k * 2.6 - 4, 7.4, sd * Bm * 0.33), pmat("fboat", "#d8d4c8", 0.6), 10, yaw=yaw, sx=2.6, sz=1.0)
-    # bow wave and wake foam
+        for sd in (-1, 1):
+            lx = (-0.17 + k * 0.08) * L; base = y0 + 2.8
+            ang = sd * (-math.pi / 2) * 0.0
+            Q = lambda fx_, fy, fz, lx=lx, sd=sd: P(lx + fx_, fy, sd * (Bm * 0.29) + fz * sd)
+            lathe(f"{n}sec{k}{sd}", [(0.0, 0.0), (1.3, 0.0), (1.3, 0.9), (0.9, 1.4), (0.0, 1.5)], Q(0, base, 0.8), grey2, 14, sx=1.3)
+            for j in (-0.3, 0.3): tube(f"{n}secb{k}{sd}{j}", [Q(1.2, base + 0.8, 0.8 + j), Q(6.0, base + 1.1, 1.6 + j)], 0.13, dk, res=2, bres=1)
+    for k, (lx, yy, lz) in enumerate(((-0.24 * L, y0 + 2.9, 0.25 * Bm), (-0.24 * L, y0 + 2.9, -0.25 * Bm), (0.0, y0 + 5.4, 0.2 * Bm), (0.0, y0 + 5.4, -0.2 * Bm),
+                                      (0.15 * L, y0 + 5.4, 0.18 * Bm), (0.15 * L, y0 + 5.4, -0.18 * Bm), (-0.13 * L, y0 + 5.4, 0.12 * Bm), (-0.13 * L, y0 + 5.4, -0.12 * Bm))):
+        lathe(f"{n}aa{k}", [(1.0, 0.0), (1.1, 0.0), (1.1, 0.9), (1.0, 0.9), (1.0, 0.1), (0.0, 0.1)], P(lx, yy, lz), grey2, 14, cap=False)
+        for j in range(4):
+            a = j * math.pi / 2 + 0.4; p0 = Vector(P(lx + 0.3 * math.cos(a), yy + 0.8, lz + 0.3 * math.sin(a)))
+            tube(f"{n}aab{k}{j}", [tuple(p0), tuple(p0 + Vector((1.4 * c, 1.2, -1.4 * s)))], 0.06, dk, res=2, bres=0)
+    boat = mat_once("shipboat", lambda: worn("shipboat", "#c8c4b8", "#6a6a64", 0.6, 0.0, 1.0, 0.7, "#8a8678"))
+    for k in range(3):
+        for sd in (-1, 1):
+            lx = -0.12 * L + k * 4.5; lz = sd * (Bm * 0.36)
+            lathe(f"{n}boat{k}{sd}", [(0.0, 0.0), (0.5, 0.08), (0.75, 0.45), (0.72, 0.8), (0.0, 0.8)], P(lx, y0 + 3.4, lz), boat, 14, yaw=yaw, sx=2.9)
+            for e in (-1.6, 1.6): tube(f"{n}dav{k}{sd}{e}", [P(lx + e, y0 + 2.8, sd * Bm * 0.26), P(lx + e, y0 + 5.2, sd * Bm * 0.3), P(lx + e, y0 + 5.0, lz)], 0.1, grey2, res=4, bres=0)
+    # ---------- water: bow wave curling off the stem, foam along the sides, a long churned wake ----------
     foam = mat_once("ffoam", foam_mat)
     for sd in (-1, 1):
-        vs = [P(L * 0.5, -0.2, 0), P(L * 0.3, -0.2, sd * Bm * 0.5), P(-L * 0.5, -0.2, sd * Bm * 0.55), P(-L * 1.1, -0.2, sd * Bm * 1.6), P(-L * 1.1, -0.2, sd * Bm * 2.6), P(-L * 0.2, -0.2, sd * Bm * 1.4), P(L * 0.3, -0.2, sd * Bm * 1.1), P(L * 0.52, -0.2, sd * 0.5)]
+        rings_ = []
+        for k in range(8):
+            f = k / 7; lx = 0.5 * L + 0.02 * L - f * 0.35 * L; t = min(1.0, max(0.0, lx / L + 0.5))
+            hwb = Bm / 2 * (0.42 + 0.58 * smooth(0.0, 0.25, t)) * max(0.08, 1 - (max(0.0, t - 0.58) / 0.42) ** 1.7)
+            hgt = 1.6 * (1 - f) ** 1.5
+            rings_.append([P(lx, -0.24, sd * (hwb + 0.2 + 7 * f)), P(lx, hgt * 0.6 - 0.2, sd * (hwb + 0.15 + 2.5 * f)), P(lx, hgt - 0.2, sd * (hwb + 0.05 + 0.6 * f))])
+        loft(f"{n}bow{sd}", rings_, foam, False, False)
+        vs = [P(0.2 * L, -0.22, sd * (Bm * 0.5 + 0.3)), P(-0.5 * L, -0.22, sd * (Bm * 0.48)), P(-0.9 * L, -0.22, sd * Bm * 1.2), P(-1.6 * L, -0.22, sd * Bm * 2.4),
+              P(-1.6 * L, -0.22, sd * Bm * 3.2), P(-0.6 * L, -0.22, sd * Bm * 1.6), P(0.15 * L, -0.22, sd * (Bm * 1.4))]
         mesh_obj(f"{n}foam{sd}", vs, [tuple(range(len(vs)))], foam)
-    mesh_obj(f"{n}wake", [P(-L * 0.5, -0.19, -Bm * 0.5), P(-L * 0.5, -0.19, Bm * 0.5), P(-L * 1.6, -0.19, Bm * 1.4), P(-L * 1.6, -0.19, -Bm * 1.4)], [(0, 1, 2, 3)], foam)
+    mesh_obj(f"{n}wake", [P(-0.48 * L, -0.21, -Bm * 0.45), P(-0.48 * L, -0.21, Bm * 0.45), P(-1.8 * L, -0.21, Bm * 1.3), P(-1.8 * L, -0.21, -Bm * 1.3)], [(0, 1, 2, 3)], foam)
+    mesh_obj(f"{n}wash", [P(-0.5 * L, -0.2, -Bm * 0.3), P(-0.5 * L, -0.2, Bm * 0.3), P(-0.8 * L, -0.2, Bm * 0.5), P(-0.8 * L, -0.2, -Bm * 0.5)], [(0, 1, 2, 3)], foam)
+
 
 def foam_mat():
     m = lib.principled("ffoam", lib.hexc("#e8eef0"), 0.6); t, n, l = lib.nodes(m); b = n["Principled BSDF"]
@@ -394,7 +606,8 @@ def foam_mat():
     nz = n.new("ShaderNodeTexNoise"); nz.inputs["Scale"].default_value = 3; nz.inputs["Detail"].default_value = 8; l.new(mp.outputs[0], nz.inputs["Vector"])
     vo = n.new("ShaderNodeTexVoronoi"); vo.inputs["Scale"].default_value = 2.5; l.new(mp.outputs[0], vo.inputs["Vector"])
     mu = n.new("ShaderNodeMath"); mu.operation = "MULTIPLY"; l.new(nz.outputs["Fac"], mu.inputs[0]); l.new(vo.outputs["Distance"], mu.inputs[1])
-    r = lib.ramp(n, l, mu.outputs[0], [(0.12, (0, 0, 0)), (0.3, (0.85, 0.85, 0.85))]); l.new(r.outputs["Color"], b.inputs["Alpha"])
+    r = lib.ramp(n, l, mu.outputs[0], [(0.04, (0, 0, 0)), (0.32, (0.7, 0.7, 0.7))]); l.new(r.outputs["Color"], b.inputs["Alpha"])
+    b.inputs["Emission Color"].default_value = (0.75, 0.8, 0.85, 1); b.inputs["Emission Strength"].default_value = 0.12
     return m
 def sea_mat():
     m = lib.principled("sea", lib.hexc("#123048"), 0.12); t, n, l = lib.nodes(m); b = n["Principled BSDF"]
@@ -423,7 +636,8 @@ def build(M, D):
     # sea, with the beach and its defences
     bpy.ops.mesh.primitive_plane_add(size=1, location=T(260, -0.25, 140)); sea = bpy.context.object; sea.scale = (420, 640, 1); bpy.ops.object.transform_apply(scale=True)
     sea.data.materials.append(sea_mat())
-    for i, (x, z, yw, L, Bm) in enumerate(((120, 60, 0.4, 110, 11), (175, 130, 0.2, 130, 13), (95, 175, 0.6, 90, 9))): warship(f"w{i}", x, z, yw, L, Bm)
+    for i, (x, z, yw, L, Bm, kind, tr) in enumerate(((120, 60, 0.4, 110, 15, "cruiser", 0.45), (175, 130, 0.2, 150, 22, "battleship", 0.3), (95, 175, 0.6, 90, 10, "destroyer", -0.3))):
+        warship(f"w{i}", x, z, yw, L, Bm, kind, tr)
     steel = mat_once("frust", lambda: worn("frust", "#4a3a30", "#7a3a1a", 0.7, 0.5, 6, 0.55, "#2a1a10"))
     for k, (x, z) in enumerate(((57, 14), (59, 19), (57.5, 25), (60, 30), (58, 35), (61, 41), (59, 47), (56.5, 52), (60.5, 22), (62, 36))):
         hedgehog(f"hh{k}", (x, H(x, z) - 0.15, z), k * 0.7, steel)
