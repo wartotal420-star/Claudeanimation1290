@@ -21,7 +21,9 @@ const { Pen } = await import("../src/videos/ww2/toon");
 
 fs.mkdirSync(path.join(outDir, "cards"), { recursive: true });
 const done = new Set(fs.readdirSync(path.join(outDir, "cards")).map((f) => f.replace(".png", "")));
-const hashOf = (key: string, w: number, h: number) => crypto.createHash("sha1").update(`${w}x${h}|${key}`).digest("hex").slice(0, 16);
+// the drawing code's own hash is part of every card id, so editing toon.ts / cast.ts never reuses stale PNGs
+const SRCV = crypto.createHash("sha1").update(["toon.ts", "cast.ts"].map((f) => fs.readFileSync(new URL(`../src/videos/ww2/${f}`, import.meta.url))).join("|")).digest("hex").slice(0, 8);
+const hashOf = (key: string, w: number, h: number) => crypto.createHash("sha1").update(`${SRCV}|${w}x${h}|${key}`).digest("hex").slice(0, 16);
 const draw = (key: string, w: number, h: number, k: number, fn: (p: any) => void) => {
   const id = hashOf(key, w, h);
   if (!done.has(id)) {
