@@ -28,3 +28,6 @@
 - Camera: vary moves (tracks, low angles, quick cuts on punchlines); never glide through empty space.
 - Frame check: no heads cut at frame bottom, main character never a dot, text never clipped.
 - Review every shot with a frame sweep (one frame per 1.5 s) BEFORE asking the user to render.
+- Before pushing any script the user will run: compile-check it (python3 -m py_compile / tsc) and run it once here.
+- User's Mac: Blender 4.5 (EEVEE engine id is BLENDER_EEVEE_NEXT there); find Blender via ls /Applications/Blender*.app
+  or mdfind; scripts must stay compatible with 4.5 (cloud preview uses bpy 5.2).
