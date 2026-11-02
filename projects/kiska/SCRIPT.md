@@ -14,7 +14,7 @@ Format: ~60 s vertical short, ~3.7 words/s, one steady narrator voice. Our own s
 - Total Allied casualties: over 300 (313 per project44.ca; Task & Purpose: 92 dead, 221 wounded).
 - The troops found no Japanese, only a few dogs, one of them Explosion. (The Clio; Wikipedia: Kiska)
 
-## Script (226 words, about 61 s at 3.7 words/s)
+## Script (224 words, about 61 s at 3.7 words/s)
 Thirty-five thousand soldiers stormed an island, lost over three hundred men, and never found a single enemy.
 It's 1943, and Japan has been holding Kiska, a freezing rock off the coast of Alaska, for over a year.
 One foggy afternoon, Japanese ships sneak into the harbor and load up every last soldier in under an hour.
